@@ -2,7 +2,7 @@
 
 Team ONYX's employee onboarding and knowledge-transfer prototype for the Engineering Albania Student Hackathon. It shows what is happening in each onboarding, what is missing or blocked, which evidence supports the status, and who should do what next.
 
-**Stack:** React with Vite (JavaScript) in `frontend/`, NestJS (TypeScript) in `backend/`, PostgreSQL optional.
+**Stack:** React 19 with Vite in `frontend/`, NestJS 11 with TypeScript in `backend/`, PostgreSQL for durable data, deterministic business rules, and optional server-side Claude/OpenAI analysis.
 
 ## Start
 
@@ -28,7 +28,90 @@ npm.cmd run dev --prefix frontend
 
 No database or API key is needed. Without a database, everything entered is saved in `backend/runtime/state.json` and survives restarts; to reset the demo, stop the backend and delete that file. `start` runs the built code: rebuild after changing the backend.
 
-A practical guide in Albanian: [docs/UDHEZUESI.md](docs/UDHEZUESI.md).
+## Technical architecture
+
+ENGage uses a simple layered architecture. The browser displays role-specific workflows, the API coordinates the use cases, deterministic rules make readiness decisions, and PostgreSQL stores the records. AI is a constrained assistant: it proposes structured information or wording, but code validates it and a person decides whether to save it.
+
+> **Core principle:** the LLM proposes, the rules decide, and a human approves.
+
+```mermaid
+flowchart LR
+    U[Role-based users] --> UI[React + Vite frontend]
+    UI -->|HTTP + JSON| API[NestJS API]
+
+    subgraph Backend
+        API --> AUTH[Auth module<br/>demo sign-in]
+        API --> CASES[Cases module<br/>case workflow and evidence]
+        API --> STAFF[Staffing module<br/>requests and assignments]
+        API --> ONB[Onboarding module<br/>analysis and follow-ups]
+
+        CASES --> RULES[Deterministic rules engine]
+        STAFF --> STORE[Repository and storage layer]
+        ONB --> STORE
+        RULES --> STORE
+
+        CASES --> AI[Claude proposals<br/>extractor and advisor]
+        ONB -. optional .-> OAI[Simulated or OpenAI analysis]
+        AI --> VALIDATE[Zod, quote, source ID,<br/>credential and role validation]
+        OAI --> VALIDATE
+    end
+
+    STORE --> DB[(PostgreSQL)]
+    STORE -. zero-configuration fallback .-> FILE[JSON seed + runtime state]
+    VALIDATE --> HUMAN[Human review]
+    HUMAN -->|Accept or approve| API
+```
+
+### Responsibilities by layer
+
+| Layer | Technology | Responsibility |
+|---|---|---|
+| Presentation | React, Vite | Shows the correct dashboard for each role, collects input, and clearly separates reported status, evidence, rule decisions, and AI suggestions. |
+| API | NestJS controllers and DTOs | Exposes typed endpoints, validates requests, applies role restrictions, and coordinates services. |
+| Application services | Cases, Staffing, Onboarding, Auth | Implements use cases such as staffing requests, project assignment, evidence review, follow-up tasks, and approval records. |
+| Business rules | `backend/src/rules/` | Computes flags, checklist state, next actions, readiness decision, and colour. It is deterministic and never calls an LLM. |
+| AI assistance | Claude through server-side `fetch`; optional OpenAI analysis | Extracts proposed events, explains evidence conflicts, and drafts follow-up wording. It cannot close a case, change a status, or write directly to storage. |
+| Validation | Zod plus plain TypeScript checks | Rejects invalid schemas, unknown evidence IDs, non-verbatim quotes, credentials, and events that the acting role cannot record. |
+| Persistence | PostgreSQL through the repository layer | Stores cases, facts, append-only events, evidence, staffing requests, reviews, CVs, and follow-up tasks. Local file storage remains available for a zero-configuration demo. |
+
+### Data and decision flow
+
+Normal workflow updates follow one predictable path:
+
+```text
+Role action -> React form -> NestJS endpoint -> DTO/workflow validation
+            -> append-only event -> PostgreSQL -> deterministic reassessment -> refreshed UI
+```
+
+The tracker status is preserved as a reported value. The rules engine independently evaluates the supporting facts and evidence, so a status such as **Ready with Support** cannot close a case by itself.
+
+### AI flow A: extract evidence from an email
+
+1. The Additional Manager or Technical Lead pastes an email in the selected case.
+2. React calls `POST /cases/:id/extract`; only the pasted text, author role, and allowed event shapes are sent to Claude.
+3. Claude returns proposed `ACCESS`, `ACTIVITY`, `BLOCKER`, or `REQUEST_ANSWERED` events with exact quotes and confidence values.
+4. Backend code validates the Zod schema, quote, credential patterns, role permission, and current case facts.
+5. Valid and rejected proposals are returned separately. Nothing has been saved yet.
+6. A human accepts one proposal; only then does React call the existing event endpoint and the rules engine reassesses the case.
+
+### AI flow B: build an evidence brief
+
+1. PMO, Additional Manager, or Technical Lead requests `POST /cases/:id/brief`.
+2. The rules engine supplies the evidence, flags, unknown checklist items, actions, and owners.
+3. Claude only phrases the conflict explanation, “What would change the decision?”, and a follow-up draft.
+4. The backend validates the response and every cited evidence ID. Invalid or unavailable AI output falls back to a deterministic template.
+5. The user reviews the original sources and approves or rejects the draft. **Sending is simulated; only the review decision is recorded.**
+
+### Why this design is feasible
+
+- **Predictable:** business decisions remain deterministic and covered by tests.
+- **Traceable:** every issue and AI statement links back to evidence IDs and original text.
+- **Safe by default:** model keys and database credentials stay in `backend/.env`; the frontend never receives them.
+- **Resilient:** PostgreSQL is the durable store, while local fixtures and runtime state keep the demo usable without infrastructure.
+- **Modular:** frontend pages, NestJS modules, rules, AI clients, validation, and persistence can evolve independently.
+- **Human-controlled:** no AI path changes readiness, closes a case, sends a message, or writes an event automatically.
+
+The current deployment is local for the hackathon demo. The same API boundaries support a hosted React frontend, NestJS service, and managed PostgreSQL database without changing the business workflow.
 
 ## Sign in
 
