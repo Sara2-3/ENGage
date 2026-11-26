@@ -66,7 +66,7 @@ export default function EvidenceBrief({ caseId, role }) {
           <h2>Can this onboarding be closed, and if not, who must do what?</h2>
         </div>
         <button className="primary" type="button" disabled={busy} onClick={build}>
-          {busy ? 'Building…' : brief ? 'Rebuild brief' : 'Build Evidence Brief'}
+          {busy ? 'Building…' : brief ? 'Refresh brief' : 'Build Evidence Brief'}
         </button>
       </div>
 
@@ -75,10 +75,13 @@ export default function EvidenceBrief({ caseId, role }) {
       {brief && (
         <>
           <div className="brief-summary" aria-label="Decision summary">
-            {currentDecision && <p><strong>Current decision</strong><span>{currentDecision}</span></p>}
-            {mainReason && <p><strong>Main reason</strong><span>{mainReason}</span></p>}
-            {nextAction?.ownerRole && <p><strong>Next owner</strong><span>{words(nextAction.ownerRole)}</span></p>}
-            {nextAction?.title && <p><strong>Next action</strong><span>{nextAction.title}</span></p>}
+            <p className="eyebrow">Decision summary</p>
+            <div className="brief-summary-grid">
+              {currentDecision && <p className="brief-summary-decision"><strong>Current decision</strong><span>{currentDecision}</span></p>}
+              {mainReason && <p><strong>Main reason</strong><span>{mainReason}</span></p>}
+              {nextAction?.ownerRole && <p><strong>Next owner</strong><span>{words(nextAction.ownerRole)}</span></p>}
+              {nextAction?.title && <p><strong>Next action</strong><span>{nextAction.title}</span></p>}
+            </div>
           </div>
 
           <p>
@@ -133,7 +136,8 @@ export default function EvidenceBrief({ caseId, role }) {
           </div>
 
           <div className="brief-change">
-            <strong>What would change the decision?</strong>
+            <p className="eyebrow">Decision requirement</p>
+            <h3>What evidence would change the decision?</h3>
             <p>{brief.whatWouldChangeTheDecision}</p>
           </div>
 
@@ -149,7 +153,7 @@ export default function EvidenceBrief({ caseId, role }) {
               </div>
             </div>
           )}
-          {note && <p role="status">{note}</p>}
+          {note && <p className="brief-status" role="status">{note}</p>}
         </>
       )}
     </section>
