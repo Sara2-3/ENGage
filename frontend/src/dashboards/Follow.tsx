@@ -3,6 +3,7 @@
 // The list is on the left; the summary of the chosen employee is on the right.
 import { useState } from 'react';
 import Actions from '../Actions';
+import EvidenceExtractor from '../EvidenceExtractor';
 import type { StaffingRequest } from '../api';
 import AskHr from '../AskHr';
 import WaitingProject from '../WaitingProject';
@@ -113,6 +114,8 @@ export default function Follow({ role, cases, staffing, onOpen, onSaved }: {
                   <ul>{c.assessment.flags.map((f) => <li key={f.code}>{f.message}</li>)}</ul>
                 </>
               )}
+
+              <EvidenceExtractor key={c.case.id} caseId={c.case.id} role={role} onSaved={onSaved} />
 
               <div className="summary-actions">
                 <CvLink c={c} role={role} />

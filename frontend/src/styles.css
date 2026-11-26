@@ -246,6 +246,24 @@ dl { margin: 0 0 16px; }
 .stat { padding: 8px; border-radius: 10px; background: var(--brand-soft); text-align: center; font-size: 11px; color: var(--muted); }
 .stat strong { display: block; font-size: 18px; color: var(--brand-dark); }
 .summary-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--line); }
+.extract-panel { margin-top: 16px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 10px; background: var(--brand-soft); }
+.extract-panel > summary { cursor: pointer; font-weight: 700; color: var(--brand-dark); }
+.extract-panel[open] > summary { margin-bottom: 10px; }
+.extract-panel textarea { width: 100%; resize: vertical; }
+.extract-result { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line); }
+.extract-error { color: #96261b; font-weight: 600; }
+.proposal { margin-top: 12px; padding: 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+.proposal-head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; align-items: center; }
+.proposal-fields { margin: 10px 0; }
+.proposal-fields > div { display: grid; grid-template-columns: minmax(90px, auto) 1fr; gap: 8px; }
+.proposal-fields dt { color: var(--muted); }
+.proposal-fields dd { margin: 0; font-weight: 600; overflow-wrap: anywhere; }
+.proposal-quote { margin: 10px 0; }
+.proposal-quote mark { padding: 2px 4px; color: var(--text); background: #fff0a8; }
+.proposal-actions { display: flex; gap: 8px; }
+.extract-rejected { margin-top: 14px; color: var(--muted); }
+.extract-rejected li { margin-bottom: 8px; }
+.extract-rejected small { display: block; margin-top: 2px; }
 @keyframes summary-in { from { opacity: 0; transform: translateX(14px); } }
 @media (max-width: 1100px) { .follow { grid-template-columns: minmax(0, 1fr); } .summary { position: static; max-height: none; } }
 @media (prefers-reduced-motion: reduce) { .summary { animation: none; } .follow-row { transition: none; } .follow-row:hover { transform: none; } }
