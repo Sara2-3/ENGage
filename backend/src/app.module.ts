@@ -5,11 +5,13 @@ import { AnalysisService } from "./analysis.service";
 import { FollowUpService } from "./follow-up.service";
 import { HealthController } from "./health.controller";
 import { DatabaseService } from "./database.service";
+import { EngageModule } from "./engage/engage.module";
 import { MockEvidenceAnalysisModel } from "./mock-analysis.model";
 import { OnboardingController } from "./onboarding.controller";
 import { OnboardingService } from "./onboarding.service";
 
 @Module({
+  imports: [EngageModule],
   controllers: [HealthController, OnboardingController],
   providers: [
     AnalysisService,
