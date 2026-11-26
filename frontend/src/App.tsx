@@ -18,7 +18,7 @@ export default function App() {
   const [staffing, setStaffing] = useState<StaffingRequest[]>([]);
   const [role, setRole] = useState(roleFromHash);
   const [selected, setSelected] = useState<string | null>(null);
-  const [employee, setEmployee] = useState('ONB-005');
+  const [employee, setEmployee] = useState('ONB-002');
   const [error, setError] = useState('');
 
   const refresh = useCallback(() => Promise.all([
