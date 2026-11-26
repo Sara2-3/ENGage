@@ -1,9 +1,10 @@
 import { BadRequestException, Body, Controller, Get, NotFoundException, Param, Post, ForbiddenException, Query, Req, StreamableFile } from '@nestjs/common';
 import { ActionAdvisor } from '../ai/advisor';
+import { EvidenceExtractor } from '../ai/evidence-extractor';
 import { addReview, readCv, saveCv } from '../db/repository';
 import { DIRECTIONS } from '../rules/types';
 import { validateEvent } from '../rules/workflow';
-import { getCase, listCases, openCase, overview, record } from './store';
+import { getCase, getCaseFacts, listCases, openCase, overview, record } from './store';
 
 async function find(id: string) {
   const detail = await getCase(id);
@@ -14,10 +15,14 @@ async function find(id: string) {
 // The roles that may open a CV. There is no login in this demo, so the role is what the page says it is.
 const CV_READERS = ['MANAGEMENT', 'HR', 'PMO', 'ADDITIONAL_MANAGER', 'TECH_LEAD', 'LINE_MANAGER', 'EMPLOYEE'];
 const BRIEF_READERS = ['PMO', 'ADDITIONAL_MANAGER', 'TECH_LEAD'];
+const EXTRACTOR_ROLES = ['ADDITIONAL_MANAGER', 'TECH_LEAD'];
 
 @Controller('cases')
 export class CasesController {
-  constructor(private readonly actionAdvisor: ActionAdvisor) {}
+  constructor(
+    private readonly actionAdvisor: ActionAdvisor,
+    private readonly evidenceExtractor: EvidenceExtractor,
+  ) {}
 
   @Get()
   list() {
@@ -114,6 +119,26 @@ export class CasesController {
       citedEvidenceIds: advice.citedEvidenceIds,
       source: advice.source,
     };
+  }
+
+  @Post(':id/extract')
+  async extract(@Param('id') id: string, @Body() body: { actorRole?: string; authorRole?: string; text?: unknown }) {
+    const actorRole = body?.actorRole ?? '';
+    if (!EXTRACTOR_ROLES.includes(actorRole)) {
+      throw new ForbiddenException('Only the Additional Manager or Technical Lead can extract evidence.');
+    }
+    await find(id);
+    if (typeof body?.text !== 'string' || !body.text.trim() || body.text.length > 5_000) {
+      throw new BadRequestException('Text must contain 1 to 5000 characters.');
+    }
+    const facts = await getCaseFacts(id);
+    if (!facts) throw new NotFoundException(`Case ${id} not found`);
+    return this.evidenceExtractor.extract({
+      actorRole,
+      authorRole: typeof body.authorRole === 'string' ? body.authorRole : '',
+      text: body.text,
+      facts,
+    });
   }
 
   // Human review. Sending is simulated: the decision is only recorded.

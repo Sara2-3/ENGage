@@ -34,6 +34,13 @@ export async function getCase(id: string) {
   };
 }
 
+// Internal case facts for proposal validation. Extraction reads them but never records an event.
+export async function getCaseFacts(id: string) {
+  const data = await readData();
+  const base = data.cases.find((x) => x.id === id);
+  return base ? evaluate(base, data).facts : null;
+}
+
 // Every case with its details, for the role dashboards.
 export async function overview() {
   const data = await readData();

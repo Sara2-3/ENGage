@@ -2,6 +2,7 @@ import { Module, OnModuleDestroy, OnModuleInit } from "@nestjs/common";
 
 import { ActionAdvisor } from "./ai/advisor";
 import { ACTION_LLM_CLIENT, ClaudeClient } from "./ai/claude-client";
+import { EvidenceExtractor } from "./ai/evidence-extractor";
 import { CasesController } from "./cases/cases.controller";
 import { StaffingController } from "./cases/staffing.controller";
 import { closeStorage, initStorage } from "./db/repository";
@@ -11,6 +12,7 @@ import { closeStorage, initStorage } from "./db/repository";
   controllers: [CasesController, StaffingController],
   providers: [
     ActionAdvisor,
+    EvidenceExtractor,
     ClaudeClient,
     { provide: ACTION_LLM_CLIENT, useExisting: ClaudeClient },
   ],
