@@ -29,7 +29,7 @@ export class ClaudeClient implements ActionLlmClient {
 
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
-      signal: AbortSignal.timeout(8_000),
+      signal: AbortSignal.timeout(20_000),
       headers: {
         'content-type': 'application/json',
         'x-api-key': key,
@@ -37,7 +37,7 @@ export class ClaudeClient implements ActionLlmClient {
       },
       body: JSON.stringify({
         model: process.env.ANTHROPIC_MODEL || 'claude-sonnet-5-5',
-        max_tokens: 1_200,
+        max_tokens: 2_500,
         system: (options?.system ?? [
           'You draft an employee-onboarding follow-up from deterministic assessment data.',
           'Return JSON only, with no markdown.',
@@ -65,6 +65,7 @@ export class ClaudeClient implements ActionLlmClient {
     const body = await response.json() as AnthropicResponse;
     const text = body.content?.find((item) => item.type === 'text')?.text;
     if (!text) throw new Error('Anthropic returned no text');
-    return JSON.parse(text);
+    // Models sometimes wrap JSON in a markdown fence; strip it before parsing.
+    return JSON.parse(text.trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, ''));
   }
 }

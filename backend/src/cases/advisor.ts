@@ -62,10 +62,12 @@ export class ActionAdvisor {
     try {
       const parsed = AdviceSchema.safeParse(await this.client.generateJson(input));
       if (!parsed.success || parsed.data.citedEvidenceIds.some((id) => !allowedEvidenceIds.has(id))) {
+        console.warn('[advisor] Claude answer rejected, using template:', parsed.success ? 'unknown evidence id cited' : parsed.error.message);
         return fallback;
       }
       return { ...parsed.data, source: 'AI generated (Claude), pending human review' };
-    } catch {
+    } catch (error) {
+      console.warn('[advisor] Claude call failed, using template:', error instanceof Error ? error.message : error);
       return fallback;
     }
   }

@@ -34,17 +34,21 @@ const Follow = ({ page, role, onOpen, onSaved }) => {
   const { staffing } = useStaffingContext();
   const view = views[role];
   const [chosen, setChosen] = useState('');
+  // After Accept the employee can leave the "Needs my action" list; keep showing them until another is picked.
+  const [kept, setKept] = useState('');
   const mine = (c) => c.assessment.actions.filter((a) => a.ownerRole === view.title).map((a) => a.title);
   const todo = cases.filter((c) => mine(c).length);
   const others = cases.filter((c) => !mine(c).length);
   const list = page === 'others' ? others : todo;
-  const c = list.find((x) => x.case.id === chosen) ?? list[0];
+  const c = list.find((x) => x.case.id === chosen)
+    ?? (kept && kept === chosen ? cases.find((x) => x.case.id === kept) : undefined)
+    ?? list[0];
   // Pin the first employee once, so a refresh after Accept does not move the summary to someone else.
   useEffect(() => { if (!chosen && c) setChosen(c.case.id); }, [chosen, c]);
 
   const row = (x) => (
     <button key={x.case.id} type="button" className={`follow-row ${x.assessment.colour}`}
-      aria-pressed={c?.case.id === x.case.id} onClick={() => setChosen(x.case.id)}>
+      aria-pressed={c?.case.id === x.case.id} onClick={() => { setChosen(x.case.id); setKept(''); }}>
       <Person name={x.case.employee} />
       <span className="follow-text">{mine(x).map(short).join(' · ') || phase(x)}</span>
       <span className="bar" role="img" aria-label={`${percent(x)}% done`}><i style={{ width: `${percent(x)}%` }} /></span>
@@ -130,7 +134,8 @@ const Follow = ({ page, role, onOpen, onSaved }) => {
                 </>
               )}
 
-              <EvidenceExtractor key={c.case.id} caseId={c.case.id} role={role} onSaved={onSaved} />
+              <EvidenceExtractor key={c.case.id} caseId={c.case.id} role={role}
+                onSaved={() => { setKept(c.case.id); onSaved(); }} />
 
               <div className="summary-actions">
                 <CvLink c={c} role={role} />
