@@ -38,7 +38,7 @@ export class StaffingController {
 
   @Post('assign')
   async assign(@Body() body: Record<string, unknown>) {
-    if (body?.actorRole !== 'MANAGEMENT') throw new BadRequestException('Only Management can assign a project.');
+    if (body?.actorRole !== 'ADDITIONAL_MANAGER') throw new BadRequestException('Only the Additional Manager can assign a project.');
     const to = {
       project: text(body.project), role: text(body.role), lineManager: text(body.lineManager),
       techLead: text(body.techLead), ktOwner: text(body.ktOwner),

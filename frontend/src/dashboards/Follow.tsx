@@ -3,7 +3,9 @@
 // The list is on the left; the summary of the chosen employee is on the right.
 import { useState } from 'react';
 import Actions from '../Actions';
+import type { StaffingRequest } from '../api';
 import AskHr from '../AskHr';
+import WaitingProject from '../WaitingProject';
 import CvLink from '../CvLink';
 import Modal from '../Modal';
 import { Inbox, ReportButton } from '../Reports';
@@ -23,8 +25,8 @@ const percent = (c: Case) => Math.round((done(c) / c.stages.length) * 100);
 const items = (title: string) => (title.startsWith('Complete: ') ? title.slice(10).split('; ') : [title]);
 const short = (title: string) => (title.startsWith('Complete: ') ? `Complete ${items(title).length} checklist items` : title);
 
-export default function Follow({ role, cases, onOpen, onSaved }: {
-  role: keyof typeof views; cases: Case[]; onOpen: (id: string) => void; onSaved: () => void;
+export default function Follow({ role, cases, staffing, onOpen, onSaved }: {
+  role: keyof typeof views; staffing: StaffingRequest[]; cases: Case[]; onOpen: (id: string) => void; onSaved: () => void;
 }) {
   const view = views[role];
   const [chosen, setChosen] = useState('');
@@ -56,6 +58,7 @@ export default function Follow({ role, cases, onOpen, onSaved }: {
         </div>
       )}
       {role === 'ADDITIONAL_MANAGER' && <Inbox cases={cases} from="LINE_MANAGER" title="Reports from Line Manager" />}
+      {role === 'ADDITIONAL_MANAGER' && <WaitingProject cases={cases} staffing={staffing} onOpen={onOpen} onSaved={onSaved} />}
       <div className="follow">
         <div>
           <section className="card">

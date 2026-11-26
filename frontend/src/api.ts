@@ -12,7 +12,7 @@ export interface Detail {
   evidence: { id: string; date: string; authorRole: string; title: string; text: string }[];
   access: { system: string; state: string; note: string; requestedOn: string | null; owner: string | null; nextFollowUp: string | null }[];
   activities: { name: string; level: string; validatedByTechOwner: boolean }[];
-  blockers: { description: string; owner: string | null; resolved: boolean }[];
+  blockers: { description: string; owner: string | null; nextFollowUp?: string | null; resolved: boolean }[];
   reports: { role: string; status: string; note: string; date: string }[];
   stages: { title: string; done: boolean }[];
   assessment: {
@@ -27,9 +27,9 @@ export interface Detail {
 // In order of seniority. HR supports the chain by finding people.
 export const roles = [
   { key: 'PMO', title: 'PMO', task: 'Sees the whole system' },
-  { key: 'MANAGEMENT', title: 'Management', task: 'Assigns projects' },
-  { key: 'ADDITIONAL_MANAGER', title: 'Additional Manager', task: 'Asks HR, reports up' },
-  { key: 'LINE_MANAGER', title: 'Line Manager', task: 'Follows progress' },
+  { key: 'MANAGEMENT', title: 'Management', task: 'Reviews reports' },
+  { key: 'ADDITIONAL_MANAGER', title: 'Additional Manager', task: 'Asks HR, assigns projects' },
+  { key: 'LINE_MANAGER', title: 'Line Manager', task: 'Progress and blockers' },
   { key: 'TECH_LEAD', title: 'Technical Lead', task: 'Gives technical tasks' },
   { key: 'EMPLOYEE', title: 'Employee', task: 'Does the tasks' },
   { key: 'HR', title: 'HR', task: 'Support: finds people' },

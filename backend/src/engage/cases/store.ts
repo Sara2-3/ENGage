@@ -150,13 +150,13 @@ export interface Assignment {
   ktOwner: string;
 }
 
-// Management puts a person on a project and names their team; onboarding starts from here.
+// The Additional Manager puts a person on a project and names their team; onboarding starts from here.
 export async function assignPerson(caseId: string, to: Assignment, requestId?: number): Promise<string | null> {
   const detail = await getCase(caseId);
   if (!detail) return 'Unknown employee.';
   const request = requestId ? (await readStaffing()).find((x) => x.id === requestId) : undefined;
   if (requestId && (request?.caseId !== caseId || request.specs.assigned)) return 'This request is not waiting for an assignment.';
-  const error = await record(caseId, { type: 'ASSIGN', actorRole: 'MANAGEMENT', payload: { ...to } });
+  const error = await record(caseId, { type: 'ASSIGN', actorRole: 'ADDITIONAL_MANAGER', payload: { ...to } });
   if (error) return error;
   await addEvent(caseId, { type: 'CONFIRM_START', actorRole: 'HR', payload: {} }, AS_OF);
   const { movement, direction } = detail.case;

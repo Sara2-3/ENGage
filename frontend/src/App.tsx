@@ -66,11 +66,11 @@ export default function App() {
         ) : (
           <>
             <Flow role={role} onPick={switchRole} />
-            {role === 'MANAGEMENT' &&<Executive cases={cases} staffing={staffing} onOpen={setSelected} onSaved={reload} />}
+            {role === 'MANAGEMENT' &&<Executive cases={cases} staffing={staffing} onOpen={setSelected} />}
             {role === 'HR' && <Hr cases={cases} staffing={staffing} onOpen={setSelected} onCreated={created} onSaved={reload} />}
             {role === 'EMPLOYEE' && <Employee cases={cases} who={employee} onPick={setEmployee} onSaved={reload} />}
             {(role === 'ADDITIONAL_MANAGER' || role === 'TECH_LEAD') && (
-              <Follow key={role} role={role} cases={cases} onOpen={setSelected} onSaved={reload} />
+              <Follow key={role} role={role} staffing={staffing} cases={cases} onOpen={setSelected} onSaved={reload} />
             )}
             {role === 'LINE_MANAGER' && <LineManager cases={cases} onSaved={reload} />}
             {role === 'PMO' && <Pmo cases={cases} staffing={staffing} onOpen={setSelected} />}

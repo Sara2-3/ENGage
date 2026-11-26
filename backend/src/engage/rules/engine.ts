@@ -114,23 +114,23 @@ function actionsFor(flag: Flag, facts: Facts): NextAction[] {
       return (facts.access ?? [])
         .filter((x) => x.state === 'NOT_REQUESTED' || x.state === 'REQUESTED' || x.state === 'APPROVED')
         .map((x) => x.state === 'NOT_REQUESTED'
-          ? a(`Request access to ${x.system}`, 'Additional Manager')
+          ? a(`Request access to ${x.system}`, 'Line Manager')
           : x.state === 'APPROVED'
           ? a(`Confirm the employee can use ${x.system}`, 'Employee')
           : x.owner
             ? a(`Get a delivery date for ${x.system}`, x.owner)
-            : a(`Identify the application owner and get approval for ${x.system}`, 'Additional Manager'));
+            : a(`Identify the application owner and get approval for ${x.system}`, 'Line Manager'));
     case 'READINESS_CONFLICT':
       return [
         a('Cover and assess the two complex scenarios, then set a review date', 'Technical Lead'),
         a('Report to Management that the case stays open', 'Additional Manager'),
       ];
-    case 'OPEN_BLOCKER': return [a('Remove the blocker and record how it was resolved', 'Additional Manager')];
-    case 'BLOCKED_NO_DETAIL': return [a('Record what is blocking, who owns it and the follow-up date', 'Additional Manager')];
-    case 'UNANSWERED_REQUEST': return [a('Escalate the unanswered request', 'Additional Manager')];
+    case 'OPEN_BLOCKER': return [a('Remove the blocker and record how it was resolved', 'Line Manager')];
+    case 'BLOCKED_NO_DETAIL': return [a('Record what is blocking, who owns it and the follow-up date', 'Line Manager')];
+    case 'UNANSWERED_REQUEST': return [a('Escalate the unanswered request', 'Line Manager')];
     case 'STALE_STATUS': return [a('Ask for a current update, including access', 'Additional Manager')];
-    case 'MISSING_PROJECT': return [a('Confirm the project and exact role', 'Management')];
-    case 'MISSING_MANAGER': return [a('Assign and record the manager', 'Management')];
+    case 'MISSING_PROJECT': return [a('Confirm the project and exact role', 'Additional Manager')];
+    case 'MISSING_MANAGER': return [a('Assign and record the manager', 'Additional Manager')];
     case 'STATUS_DATE_MISMATCH': return [a('Check that onboarding has actually started', 'HR')];
     case 'NO_REVIEW_DATE': return [a('Schedule the final readiness review', 'Technical Lead')];
     case 'NOT_VALIDATED': return [a('Observe the activities and validate readiness', 'Technical Lead')];
@@ -152,9 +152,11 @@ export function assess(c: OnboardingCase, facts: Facts, evidence: Evidence[], as
   const colour: Colour = red ? 'RED' : flags.length ? 'AMBER' : decision === 'CAN_CLOSE' ? 'GREEN' : 'GREY';
 
   const missing = checklist.filter((x) => x.state !== 'CONFIRMED').map((x) => x.item);
+  const closed = decision === 'CAN_CLOSE'
+    && (facts.reports ?? []).some((r) => r.role === 'ADDITIONAL_MANAGER' && r.status === 'COMPLETED');
   const actions: NextAction[] = flags.length
     ? flags.flatMap((f) => actionsFor(f, facts))
-    : [{
+    : closed ? [] : [{
       title: decision === 'CAN_CLOSE' ? 'Report completion to Management' : `Complete: ${missing.join('; ')}`,
       ownerRole: 'Additional Manager',
       flagCode: null,

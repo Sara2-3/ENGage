@@ -18,14 +18,14 @@ export interface CaseEvent extends NewEvent {
 }
 
 export const ALLOWED: Record<EventType, string[]> = {
-  ASSIGN: ['MANAGEMENT'],
+  ASSIGN: ['ADDITIONAL_MANAGER'],
   CONFIRM_START: ['HR'],
   PLAN: ['TECH_LEAD'],
   ACTIVITY: ['EMPLOYEE', 'ADDITIONAL_MANAGER', 'TECH_LEAD'],
   ACCESS: ['EMPLOYEE', 'ADDITIONAL_MANAGER', 'TECH_LEAD'],
-  BLOCKER: ['EMPLOYEE', 'ADDITIONAL_MANAGER', 'TECH_LEAD'],
-  RESOLVE_BLOCKER: ['ADDITIONAL_MANAGER', 'TECH_LEAD'],
-  REQUEST_ANSWERED: ['ADDITIONAL_MANAGER', 'TECH_LEAD'],
+  BLOCKER: ['EMPLOYEE', 'ADDITIONAL_MANAGER', 'LINE_MANAGER', 'TECH_LEAD'],
+  RESOLVE_BLOCKER: ['ADDITIONAL_MANAGER', 'LINE_MANAGER', 'TECH_LEAD'],
+  REQUEST_ANSWERED: ['ADDITIONAL_MANAGER', 'LINE_MANAGER', 'TECH_LEAD'],
   VALIDATE: ['TECH_LEAD'],
   NEXT_STEP: ['ADDITIONAL_MANAGER', 'TECH_LEAD'],
   REPORT: ['ADDITIONAL_MANAGER', 'LINE_MANAGER', 'TECH_LEAD'],
@@ -66,7 +66,9 @@ export function validateEvent(e: NewEvent, facts: Facts): string | null {
       return p.state === 'USABLE' && e.actorRole !== 'EMPLOYEE'
         ? 'Only the employee can confirm that a system is usable.' : null;
     case 'BLOCKER':
-      return filled(p.description) ? null : 'Describe the blocker.';
+      if (!filled(p.description)) return 'Describe the blocker.';
+      return e.actorRole === 'LINE_MANAGER' && !(filled(p.owner) && filled(p.nextFollowUp))
+        ? 'Give the blocker an owner and a follow-up date.' : null;
     case 'RESOLVE_BLOCKER':
       if (!(facts.blockers ?? []).some((b) => !b.resolved)) return 'There is no open blocker.';
       return filled(p.note) ? null : 'Say how it was resolved.';

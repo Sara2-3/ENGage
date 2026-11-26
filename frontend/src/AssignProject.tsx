@@ -1,4 +1,4 @@
-// Management decides which project a person goes to and who is in their team.
+// The Additional Manager decides which project a person goes to and who is in their team.
 import { useState } from 'react';
 import { api } from './api';
 import Modal from './Modal';
@@ -17,7 +17,7 @@ export default function AssignProject({ caseId, name, requestId, project = '', r
   const save = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await api('/staffing/assign', { actorRole: 'MANAGEMENT', caseId, requestId, ...draft });
+      await api('/staffing/assign', { actorRole: 'ADDITIONAL_MANAGER', caseId, requestId, ...draft });
       onSaved();
     } catch (error) { setNote((error as Error).message); }
   };

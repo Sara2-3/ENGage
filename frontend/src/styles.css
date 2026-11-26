@@ -259,3 +259,10 @@ blockquote p { margin: 6px 0 0; }
 .card h4 { margin: 16px 0 4px; font-size: 12px; text-transform: uppercase; letter-spacing: .05em; color: var(--brand-dark); }
 
 small.problem { color: #96261b; font-weight: 600; }
+
+/* PMO: two halves, by project and by employee */
+.halves { display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: 20px; align-items: start; }
+.halves h3 { margin: 0; }
+@media (max-width: 480px) { .halves { grid-template-columns: minmax(0, 1fr); } }
+.item-head > h3 + .muted { white-space: nowrap; }
+.item-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 4px; }

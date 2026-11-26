@@ -1,5 +1,6 @@
-// Line Manager: reads the Technical Lead's reports and reports to the Additional Manager,
-// without technical detail.
+// Line Manager (starter pack section 2): follow local progress and help remove practical blockers.
+// Also reads the Technical Lead's reports and reports to the Additional Manager.
+import Blockers from '../Blockers';
 import CvLink from '../CvLink';
 import { Inbox, latest, ReportButton } from '../Reports';
 import Review from '../Review';
@@ -8,7 +9,8 @@ import { Person, phase, Title, type Case } from '../shared';
 export default function LineManager({ cases, onSaved }: { cases: Case[]; onSaved: () => void }) {
   return (
     <div className="narrow">
-      <Title title="Line Manager" need="Read the Technical Lead's reports, then report to the Additional Manager." />
+      <Title title="Line Manager" need="Follow local progress and help remove practical blockers." />
+      <Blockers cases={cases} onSaved={onSaved} />
       <Inbox cases={cases} from="TECH_LEAD" title="Reports from Technical Lead" />
       <section className="card">
         <h3>Progress</h3>

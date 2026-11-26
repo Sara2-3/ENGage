@@ -16,7 +16,7 @@ interface Form {
 }
 
 const forms: Form[] = [
-  { type: 'ASSIGN', title: 'Assign project and people', roles: ['MANAGEMENT'], fields: [
+  { type: 'ASSIGN', title: 'Assign project and people', roles: ['ADDITIONAL_MANAGER'], fields: [
     { name: 'project', label: 'Project' }, { name: 'role', label: 'Exact role' }, { name: 'lineManager', label: 'Line Manager' },
     { name: 'techLead', label: 'Technical Lead' }, { name: 'ktOwner', label: 'Additional Manager (KT Owner)' }] },
   { type: 'CONFIRM_START', title: 'Confirm start', roles: ['HR'], fields: [] },
@@ -28,10 +28,10 @@ const forms: Form[] = [
   { type: 'ACCESS', title: 'Update access', roles: ['EMPLOYEE', 'ADDITIONAL_MANAGER', 'TECH_LEAD'], fields: [
     { name: 'system', label: 'System' }, { name: 'state', label: 'State', options: ['REQUESTED', 'APPROVED', 'USABLE', 'NOT_REQUESTED'] },
     { name: 'owner', label: 'Owner' }, { name: 'nextFollowUp', label: 'Next follow-up', type: 'date' }] },
-  { type: 'BLOCKER', title: 'Report a blocker', roles: ['EMPLOYEE', 'ADDITIONAL_MANAGER', 'TECH_LEAD'], fields: [
+  { type: 'BLOCKER', title: 'Report a blocker', roles: ['EMPLOYEE', 'ADDITIONAL_MANAGER', 'LINE_MANAGER', 'TECH_LEAD'], fields: [
     { name: 'description', label: 'What is blocking?' }, { name: 'owner', label: 'Owner' }, { name: 'nextFollowUp', label: 'Next follow-up', type: 'date' }] },
-  { type: 'RESOLVE_BLOCKER', title: 'Resolve open blockers', roles: ['ADDITIONAL_MANAGER', 'TECH_LEAD'], fields: [{ name: 'note', label: 'How was it resolved?' }] },
-  { type: 'REQUEST_ANSWERED', title: 'Record an answer to a request', roles: ['ADDITIONAL_MANAGER', 'TECH_LEAD'], fields: [{ name: 'note', label: 'Answer' }] },
+  { type: 'RESOLVE_BLOCKER', title: 'Resolve open blockers', roles: ['ADDITIONAL_MANAGER', 'LINE_MANAGER', 'TECH_LEAD'], fields: [{ name: 'note', label: 'How was it resolved?' }] },
+  { type: 'REQUEST_ANSWERED', title: 'Record an answer to a request', roles: ['ADDITIONAL_MANAGER', 'LINE_MANAGER', 'TECH_LEAD'], fields: [{ name: 'note', label: 'Answer' }] },
   { type: 'VALIDATE', title: 'Review evidence and decide', roles: ['TECH_LEAD'], fields: [
     { name: 'sufficient', label: 'Is the evidence enough?', options: ['no', 'yes'] },
     { name: 'outcome', label: 'Readiness (if yes)', options: ['READY_WITH_SUPPORT', 'PARTIALLY_READY', 'READY'] },
@@ -49,11 +49,13 @@ const forms: Form[] = [
     { name: 'title', label: 'Action' }, { name: 'owner', label: 'Owner' }, { name: 'due', label: 'Due', type: 'date' }] },
 ];
 
-export default function Actions({ data, role, only, onSaved }: { data: Detail; role: string; only?: string; onSaved: (d: Detail) => void }) {
+export default function Actions({ data, role, only, initial = {}, onSaved }: {
+  data: Detail; role: string; only?: string; initial?: Record<string, string>; onSaved: (d: Detail) => void;
+}) {
   const available = forms.filter((f) => f.roles.includes(role) && (!only || f.type === only));
   const [type, setType] = useState('');
   const form = available.find((f) => f.type === type) ?? available[0];
-  const [values, setValues] = useState<Record<string, string>>({});
+  const [values, setValues] = useState<Record<string, string>>(initial);
   const [note, setNote] = useState('');
 
   if (!form) return null;

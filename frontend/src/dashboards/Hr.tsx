@@ -12,7 +12,7 @@ const problemCodes = ['STATUS_DATE_MISMATCH', 'MISSING_PROJECT', 'MISSING_MANAGE
 // Why HR has to look at this case. Empty means onboarding started correctly.
 const problems = (c: Case) => {
   const found = c.assessment.flags.filter((f) => problemCodes.includes(f.code))
-    .map((f) => (f.code === 'MISSING_PROJECT' ? 'Waiting for Management to assign a project.' : f.message));
+    .map((f) => (f.code === 'MISSING_PROJECT' ? 'Waiting for the Additional Manager to assign a project.' : f.message));
   return found.length || c.stages[1].done ? found : ['Start is not confirmed.'];
 };
 
@@ -53,7 +53,7 @@ function Request({ request, cases, onSaved }: { request: StaffingRequest; cases:
         <div className="assign">
           <input value={employee} onChange={(e) => setEmployee(e.target.value)} placeholder="New employee name (fictional)" aria-label="New employee name" />
           <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} aria-label="Start date" />
-          <button className="primary" disabled={!employee.trim() || !startDate} onClick={hire}>Send to Management</button>
+          <button className="primary" disabled={!employee.trim() || !startDate} onClick={hire}>Send to Additional Manager</button>
         </div>
       ) : (
         <>
@@ -66,7 +66,7 @@ function Request({ request, cases, onSaved }: { request: StaffingRequest; cases:
                 </option>
               ))}
             </select>
-            <button className="primary" disabled={!caseId} onClick={fill}>Send to Management</button>
+            <button className="primary" disabled={!caseId} onClick={fill}>Send to Additional Manager</button>
           </div>
           <small>Skills and availability are not in the data. Confirm them before moving anyone.</small>
         </>
