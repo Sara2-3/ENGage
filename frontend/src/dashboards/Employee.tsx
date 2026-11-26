@@ -71,8 +71,7 @@ export default function Employee({ cases, who, onPick, onSaved }: {
 
           <section className="card">
             <h3>My actions</h3>
-            <List items={mine} />
-            {!mine.length && <p className="muted">Nothing for you to do right now.</p>}
+            {mine.length ? <List items={mine} /> : <p className="muted">Nothing for you to do right now.</p>}
             <h3>Waiting on others</h3>
             <List items={waiting} />
           </section>

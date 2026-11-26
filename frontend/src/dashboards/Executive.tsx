@@ -51,8 +51,8 @@ export default function Executive({ cases, staffing, onOpen, onSaved }: {
         </label>
         <button className="primary" disabled={!project.trim() || !need.trim()}>Send request</button>
         {note && <p role="status">{note}</p>}
-        <List items={staffing.map((s) =>
-          `${s.project}: ${s.need}. ${s.status === 'OPEN' ? 'Waiting for HR' : `Filled with ${name(s.caseId) ?? s.caseId}`}`)} />
+        {staffing.length > 0 && <List items={staffing.map((s) =>
+          `${s.project}: ${s.need}. ${s.status === 'OPEN' ? 'Waiting for HR' : `Filled with ${name(s.caseId) ?? s.caseId}`}`)} />}
       </form>
 
       <Table title="Needs intervention" head={['Project', 'Risk']} onOpen={onOpen}
