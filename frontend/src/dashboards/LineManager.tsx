@@ -1,6 +1,7 @@
 // Line Manager: the general picture of how onboarding has gone, without technical detail.
 // The Additional Manager and the Technical Lead report here.
 import { words } from '../api';
+import CvLink from '../CvLink';
 import { Person, phase, Title, type Case } from '../shared';
 
 const latest = (c: Case, role: string) => [...c.reports].reverse().find((r) => r.role === role);
@@ -31,6 +32,7 @@ export default function LineManager({ cases }: { cases: Case[] }) {
                 <Person name={c.case.employee} />
                 <small>{phase(c)}</small>
               </div>
+              <CvLink c={c} role="LINE_MANAGER" />
               <progress max={c.stages.length} value={done} aria-label={`${done} of ${c.stages.length} steps done`} />
               <span className="reports">
                 {from.map(([role, name]) => {

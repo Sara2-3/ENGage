@@ -213,3 +213,9 @@ dl { margin: 0 0 16px; }
 .add { display: flex; justify-content: flex-end; margin-bottom: 8px; }
 .add > button { background: var(--brand); border-color: var(--brand); border-radius: 999px; color: #fff; font-weight: 600; }
 .add > button:hover { background: var(--brand-dark); }
+
+.cv { font-size: 13px; font-weight: 600; color: var(--brand); white-space: nowrap; }
+.cv-box { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.cv-box .upload { padding: 4px 12px; border: 1px solid #d5d0d9; border-radius: 999px; color: var(--text); cursor: pointer; }
+.cv-box .upload:hover, .cv-box .upload:focus-within { border-color: var(--brand); }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }

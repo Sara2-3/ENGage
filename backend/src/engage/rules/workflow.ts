@@ -18,7 +18,7 @@ export interface CaseEvent extends NewEvent {
 }
 
 export const ALLOWED: Record<EventType, string[]> = {
-  ASSIGN: ['HR'],
+  ASSIGN: ['MANAGEMENT'],
   CONFIRM_START: ['HR'],
   PLAN: ['TECH_LEAD'],
   ACTIVITY: ['EMPLOYEE', 'ADDITIONAL_MANAGER', 'TECH_LEAD'],

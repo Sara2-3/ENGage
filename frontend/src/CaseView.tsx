@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import Actions from './Actions';
 import EvidenceReview from './EvidenceReview';
+import CvLink from './CvLink';
 import Modal from './Modal';
 import { api, roles, words, type Detail } from './api';
 
@@ -65,6 +66,8 @@ export default function CaseView({ id, viewer, onChanged }: { id: string; viewer
           ))}
         </ol>
       </div>
+
+      {viewer !== 'EMPLOYEE' && <p><CvLink c={data} role={viewer} /></p>}
 
       <div className="modules">
         <Modal title="What is wrong" summary={a.flags.length ? `${a.flags.length} issue${a.flags.length > 1 ? 's' : ''}` : 'No issue detected'}>

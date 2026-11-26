@@ -1,5 +1,6 @@
 // PMO: the widest view, without detail. Completed or still in progress, and in which phase.
 import { useState } from 'react';
+import CvLink from '../CvLink';
 import { allPhases, completed, movement, Person, phase, Title, type Case } from '../shared';
 
 export default function Pmo({ cases }: { cases: Case[] }) {
@@ -27,6 +28,7 @@ export default function Pmo({ cases }: { cases: Case[] }) {
               <Person name={c.case.employee} />
               <small>{movement(c)} · {phase(c)}</small>
             </div>
+            <CvLink c={c} role="PMO" />
             <span className={`pill ${completed(c) ? 'GREEN' : 'GREY'}`}>{completed(c) ? 'Completed' : 'In progress'}</span>
           </div>
         ))}

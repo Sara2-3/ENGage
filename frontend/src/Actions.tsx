@@ -16,7 +16,7 @@ interface Form {
 }
 
 const forms: Form[] = [
-  { type: 'ASSIGN', title: 'Assign project and people', roles: ['HR'], fields: [
+  { type: 'ASSIGN', title: 'Assign project and people', roles: ['MANAGEMENT'], fields: [
     { name: 'project', label: 'Project' }, { name: 'role', label: 'Exact role' }, { name: 'lineManager', label: 'Line Manager' },
     { name: 'techLead', label: 'Technical Lead' }, { name: 'ktOwner', label: 'Additional Manager (KT Owner)' }] },
   { type: 'CONFIRM_START', title: 'Confirm start', roles: ['HR'], fields: [] },

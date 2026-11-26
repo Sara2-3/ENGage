@@ -1,6 +1,7 @@
 // Additional Manager and Technical Lead: both follow that onboarding is done properly
 // (technically and in every other aspect) and both report to the Line Manager.
 import Actions from '../Actions';
+import CvLink from '../CvLink';
 import Modal from '../Modal';
 import { Person, phase, Title, type Case } from '../shared';
 
@@ -25,6 +26,7 @@ export default function Follow({ role, cases, onOpen, onSaved }: {
           <Person name={c.case.employee} onOpen={() => onOpen(c.case.id)} />
           <small>{mine(c).join(' · ') || `${c.case.project ?? 'No project'} · ${phase(c)}`}</small>
         </div>
+        <CvLink c={c} role={role} />
         {reported && <span className="pill GREEN">Reported</span>}
         {role === 'ADDITIONAL_MANAGER' && (
           <Modal title="Requirements">

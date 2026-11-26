@@ -1,5 +1,5 @@
 // Combines stored data, workflow records and the rules engine.
-import { addCase, addEvent, addStaffing, fillStaffing, readData, readReviews, readStaffing, type Data, type StaffingSpecs } from '../db/repository';
+import { addCase, addEvent, addStaffing, fillStaffing, markAssigned, readCvIds, readData, readReviews, readStaffing, type Data, type StaffingSpecs } from '../db/repository';
 import { assess, AS_OF } from '../rules/engine';
 import type { OnboardingCase } from '../rules/types';
 import { applyEvents, stages, validateEvent, type NewEvent } from '../rules/workflow';
@@ -18,6 +18,7 @@ export async function getCase(id: string) {
   return {
     asOf: AS_OF,
     case: c,
+    hasCv: (await readCvIds()).has(id),
     details: facts.details ?? {},
     evidence,
     access: facts.access ?? [],
@@ -33,10 +34,12 @@ export async function getCase(id: string) {
 // Every case with its details, for the role dashboards.
 export async function overview() {
   const data = await readData();
+  const cvs = await readCvIds();
   return data.cases.map((base) => {
     const { case: c, facts, evidence, assessment } = evaluate(base, data);
     return {
       case: c,
+      hasCv: cvs.has(c.id),
       details: facts.details ?? {},
       evidence,
       access: facts.access ?? [],
@@ -119,17 +122,43 @@ export async function fillRequest(requestId: number, caseId: string): Promise<st
   const { movement, project } = detail.case;
   if (movement !== 'REALLOCATION' && project) return 'Only reallocations or people without a project can be proposed.';
   if (project === request.project) return 'This person is already on that project.';
-  const error = await record(caseId, { type: 'ASSIGN', actorRole: 'HR', payload: { project: request.project } });
-  if (!error) await fillStaffing(requestId, caseId);
-  return error;
+  await fillStaffing(requestId, caseId);
+  return null;
 }
 
-// A new-hire request is filled by registering the person, which starts their onboarding.
+// A new-hire request is filled by registering the person. Management assigns the project afterwards.
 export async function hireForRequest(requestId: number, employee: string, startDate: string): Promise<string | null> {
   const request = (await readStaffing()).find((x) => x.id === requestId);
   if (!request || request.status !== 'OPEN') return 'This request is not open.';
   if (request.specs.type !== 'NEW_HIRE') return 'This request is for someone already in the company.';
-  const created = await openCase({ employee, movement: 'NEW_HIRE', startDate, project: request.project, direction: request.specs.direction ?? null });
+  const created = await openCase({ employee, movement: 'NEW_HIRE', startDate, project: null, direction: request.specs.direction ?? null });
   await fillStaffing(requestId, created.id);
+  return null;
+}
+
+export interface Assignment {
+  project: string;
+  role: string;
+  lineManager: string;
+  techLead: string;
+  ktOwner: string;
+}
+
+// Management puts a person on a project and names their team; onboarding starts from here.
+export async function assignPerson(caseId: string, to: Assignment, requestId?: number): Promise<string | null> {
+  const detail = await getCase(caseId);
+  if (!detail) return 'Unknown employee.';
+  const request = requestId ? (await readStaffing()).find((x) => x.id === requestId) : undefined;
+  if (requestId && (request?.caseId !== caseId || request.specs.assigned)) return 'This request is not waiting for an assignment.';
+  const error = await record(caseId, { type: 'ASSIGN', actorRole: 'MANAGEMENT', payload: { ...to } });
+  if (error) return error;
+  await addEvent(caseId, { type: 'CONFIRM_START', actorRole: 'HR', payload: {} }, AS_OF);
+  const { movement, direction } = detail.case;
+  const moved = Boolean(detail.case.project) && detail.case.project !== to.project;
+  const description = movement === 'NEW_HIRE' && !moved
+    ? `New hire${direction ? ` in the ${direction} direction` : ''}, joining project ${to.project} as ${to.role}.`
+    : `You are moving to project ${to.project} as ${to.role}.`;
+  await addEvent(caseId, { type: 'PROFILE', actorRole: 'HR', payload: { description } }, AS_OF);
+  if (requestId) await markAssigned(requestId);
   return null;
 }

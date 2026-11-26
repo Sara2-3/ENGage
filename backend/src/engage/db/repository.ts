@@ -1,6 +1,6 @@
 // Data access. Uses PostgreSQL when DATABASE_URL is set; otherwise keeps
 // data in memory from the JSON seed files. A configured but unreachable database is an error.
-import { readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { Pool, types } from 'pg';
 import type { Evidence, Facts, OnboardingCase } from '../rules/types';
@@ -16,6 +16,7 @@ export interface Review {
 export interface StaffingSpecs {
   type: 'NEW_HIRE' | 'REALLOCATION';
   direction?: string;
+  assigned?: boolean;
   skills: string;
   level: string;
   startDate: string;
@@ -47,6 +48,11 @@ const seed = {
   evidence: load<Evidence[]>('evidence.json'),
   facts: load<Record<string, Facts>>('facts.json'),
 };
+
+// CVs of the sample employees; uploads are added to the same map (or table).
+const cvDir = join(__dirname, '../../../data/cvs');
+const cvFiles = new Map<string, Buffer>(
+  existsSync(cvDir) ? readdirSync(cvDir).filter((f) => f.endsWith('.pdf')).map((f) => [f.slice(0, -4), readFileSync(join(cvDir, f))]) : []);
 
 const memory = {
   cases: [...seed.cases], events: [] as CaseEvent[], reviews: [] as Review[], staffing: [] as StaffingRequest[],
@@ -97,6 +103,10 @@ const SCHEMA = `
     request_date date NOT NULL
   );
   ALTER TABLE staffing_requests ADD COLUMN IF NOT EXISTS specs jsonb NOT NULL DEFAULT '{}';
+  CREATE TABLE IF NOT EXISTS case_cvs (
+    case_id text PRIMARY KEY REFERENCES cases(id),
+    data bytea NOT NULL
+  );
   CREATE TABLE IF NOT EXISTS reviews (
     id serial PRIMARY KEY,
     case_id text NOT NULL REFERENCES cases(id),
@@ -121,6 +131,9 @@ export async function initStorage(env = process.env) {
     await insertCase(c);
     // Rows seeded before the column existed get their direction now.
     if (c.direction) await pool.query('UPDATE cases SET direction = $2 WHERE id = $1 AND direction IS NULL', [c.id, c.direction]);
+  }
+  for (const [caseId, data] of cvFiles) {
+    await pool.query('INSERT INTO case_cvs VALUES ($1,$2) ON CONFLICT (case_id) DO NOTHING', [caseId, data]);
   }
   for (const e of seed.evidence) {
     await pool.query('INSERT INTO evidence VALUES ($1,$2,$3,$4,$5,$6) ON CONFLICT (id) DO NOTHING',
@@ -161,6 +174,24 @@ export async function readData(): Promise<Data> {
     `SELECT id, case_id AS "caseId", type, actor_role AS "actorRole", payload, event_date AS date
      FROM events ORDER BY id`);
   return { cases, evidence, facts: Object.fromEntries(facts.map((f) => [f.caseId, f.facts])), events };
+}
+
+export async function readCvIds(): Promise<Set<string>> {
+  if (!pool) return new Set(cvFiles.keys());
+  return new Set((await rows<{ id: string }>('SELECT case_id AS id FROM case_cvs')).map((r) => r.id));
+}
+
+export async function readCv(caseId: string): Promise<Buffer | undefined> {
+  if (!pool) return cvFiles.get(caseId);
+  return (await rows<{ data: Buffer }>('SELECT data FROM case_cvs WHERE case_id = $1', [caseId]))[0]?.data;
+}
+
+export async function saveCv(caseId: string, data: Buffer) {
+  if (!pool) {
+    cvFiles.set(caseId, data);
+    return;
+  }
+  await pool.query('INSERT INTO case_cvs VALUES ($1,$2) ON CONFLICT (case_id) DO UPDATE SET data = $2', [caseId, data]);
 }
 
 export async function addCase(c: OnboardingCase) {
@@ -205,6 +236,15 @@ export async function addStaffing(project: string, need: string, specs: Staffing
     return;
   }
   await pool.query('INSERT INTO staffing_requests (project, need, specs, request_date) VALUES ($1,$2,$3,$4)', [project, need, specs, date]);
+}
+
+export async function markAssigned(id: number) {
+  if (!pool) {
+    const request = memory.staffing.find((x) => x.id === id)!;
+    request.specs = { ...request.specs, assigned: true };
+    return;
+  }
+  await pool.query(`UPDATE staffing_requests SET specs = specs || '{"assigned": true}' WHERE id = $1`, [id]);
 }
 
 export async function fillStaffing(id: number, caseId: string) {

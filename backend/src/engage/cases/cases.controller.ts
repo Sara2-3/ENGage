@@ -1,6 +1,6 @@
-import { BadRequestException, Body, Controller, Get, NotFoundException, Param, Post } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, NotFoundException, Param, Post, ForbiddenException, Query, Req, StreamableFile } from '@nestjs/common';
 import { templateAdvice } from '../ai/advisor';
-import { addReview } from '../db/repository';
+import { addReview, readCv, saveCv } from '../db/repository';
 import { DIRECTIONS } from '../rules/types';
 import { validateEvent } from '../rules/workflow';
 import { getCase, listCases, openCase, overview, record } from './store';
@@ -10,6 +10,9 @@ async function find(id: string) {
   if (!detail) throw new NotFoundException(`Case ${id} not found`);
   return detail;
 }
+
+// The roles that may open a CV. There is no login in this demo, so the role is what the page says it is.
+const CV_READERS = ['MANAGEMENT', 'HR', 'PMO', 'ADDITIONAL_MANAGER', 'TECH_LEAD', 'LINE_MANAGER'];
 
 @Controller('cases')
 export class CasesController {
@@ -46,6 +49,26 @@ export class CasesController {
     const error = await record(id, { type: body?.type as never, actorRole: body?.actorRole ?? '', payload: body?.payload ?? {} });
     if (error) throw new BadRequestException(error);
     return find(id);
+  }
+
+  @Get(':id/cv')
+  async cv(@Param('id') id: string, @Query('role') role?: string) {
+    if (!CV_READERS.includes(role ?? '')) throw new ForbiddenException('This role cannot open CVs.');
+    const data = await readCv(id);
+    if (!data) throw new NotFoundException('No CV for this employee.');
+    return new StreamableFile(data, { type: 'application/pdf', disposition: `inline; filename="CV-${id.replace(/[^A-Z0-9-]/g, '')}.pdf"` });
+  }
+
+  @Post(':id/cv')
+  async uploadCv(@Param('id') id: string, @Query('role') role: string, @Req() req: { body: unknown }) {
+    if (role !== 'HR') throw new ForbiddenException('Only HR can upload a CV.');
+    await find(id);
+    const data = req.body;
+    if (!Buffer.isBuffer(data) || data.subarray(0, 5).toString('latin1') !== '%PDF-') {
+      throw new BadRequestException('Upload a PDF file.');
+    }
+    await saveCv(id, data);
+    return { saved: true };
   }
 
   @Get('overview')

@@ -3,6 +3,7 @@ export type Colour = 'RED' | 'AMBER' | 'GREY' | 'GREEN';
 
 export interface Detail {
   asOf: string;
+  hasCv?: boolean;
   case: { id: string; employee: string; movement: string; project: string | null; startDate: string; manager: string | null; trackerStatus: string; lastUpdate: string; direction?: string | null };
   details: Record<string, string | undefined>;
   evidence: { id: string; date: string; authorRole: string; title: string; text: string }[];
@@ -32,7 +33,7 @@ export const roles = [
 
 export interface StaffingRequest {
   id: number; project: string; need: string;
-  specs?: { type?: string; direction?: string; skills?: string; level?: string; startDate?: string; notes?: string };
+  specs?: { assigned?: boolean; type?: string; direction?: string; skills?: string; level?: string; startDate?: string; notes?: string };
   status: 'OPEN' | 'FILLED'; caseId: string | null; date: string;
 }
 
@@ -49,6 +50,13 @@ export const directions = Object.keys(directionInfo);
 export const words = (v: string) => v.replaceAll('_', ' ').toLowerCase().replace(/^./, (s) => s.toUpperCase());
 
 export const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3000';
+
+export const cvUrl = (caseId: string, role: string) => `${API_URL}/cases/${caseId}/cv?role=${role}`;
+
+export async function uploadCv(caseId: string, file: File) {
+  const res = await fetch(cvUrl(caseId, 'HR'), { method: 'POST', headers: { 'Content-Type': 'application/pdf' }, body: file });
+  if (!res.ok) throw new Error((await res.json().catch(() => null))?.message ?? `Upload failed (${res.status})`);
+}
 
 export async function api<T>(path: string, body?: unknown): Promise<T> {
   const res = await fetch(`${API_URL}${path}`, body === undefined ? undefined : {

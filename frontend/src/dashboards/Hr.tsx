@@ -2,6 +2,7 @@
 // New hires and reallocations are separate jobs: reallocations answer Management requests.
 import { useState } from 'react';
 import { api, directionInfo, directions, words, type StaffingRequest } from '../api';
+import CvLink from '../CvLink';
 import Modal from '../Modal';
 import NewCase from '../NewCase';
 import { date, Person, Title, type Case } from '../shared';
@@ -10,7 +11,8 @@ const problemCodes = ['STATUS_DATE_MISMATCH', 'MISSING_PROJECT', 'MISSING_MANAGE
 
 // Why HR has to look at this case. Empty means onboarding started correctly.
 const problems = (c: Case) => {
-  const found = c.assessment.flags.filter((f) => problemCodes.includes(f.code)).map((f) => f.message);
+  const found = c.assessment.flags.filter((f) => problemCodes.includes(f.code))
+    .map((f) => (f.code === 'MISSING_PROJECT' ? 'Waiting for Management to assign a project.' : f.message));
   return found.length || c.stages[1].done ? found : ['Start is not confirmed.'];
 };
 
@@ -39,7 +41,7 @@ function Request({ request, cases, onSaved }: { request: StaffingRequest; cases:
 
   return (
     <div className="request">
-      <strong>{request.project}</strong>: {request.need}
+      <strong>{request.need}</strong> for {request.project}
       <dl className="specs">
         {request.specs?.direction && <><dt>Direction</dt><dd>{request.specs.direction}</dd></>}
         {request.specs?.skills && <><dt>Technical skills</dt><dd>{request.specs.skills}</dd></>}
@@ -51,7 +53,7 @@ function Request({ request, cases, onSaved }: { request: StaffingRequest; cases:
         <div className="assign">
           <input value={employee} onChange={(e) => setEmployee(e.target.value)} placeholder="New employee name (fictional)" aria-label="New employee name" />
           <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} aria-label="Start date" />
-          <button className="primary" disabled={!employee.trim() || !startDate} onClick={hire}>Start onboarding</button>
+          <button className="primary" disabled={!employee.trim() || !startDate} onClick={hire}>Send to Management</button>
         </div>
       ) : (
         <>
@@ -64,7 +66,7 @@ function Request({ request, cases, onSaved }: { request: StaffingRequest; cases:
                 </option>
               ))}
             </select>
-            <button className="primary" disabled={!caseId} onClick={fill}>Move to {request.project}</button>
+            <button className="primary" disabled={!caseId} onClick={fill}>Send to Management</button>
           </div>
           <small>Skills and availability are not in the data. Confirm them before moving anyone.</small>
         </>
@@ -160,6 +162,7 @@ export default function Hr({ cases, staffing, onOpen, onCreated, onSaved }: {
               <dt>Description</dt>
               <dd>{c.details.description ?? <span className="warn">Not written</span>}</dd>
             </dl>
+            <CvLink c={c} role="HR" onSaved={onSaved} />
             <Profile c={c} onSaved={onSaved} />
           </article>
         ))}

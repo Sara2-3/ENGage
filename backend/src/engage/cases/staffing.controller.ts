@@ -1,6 +1,6 @@
 import { BadRequestException, Body, Controller, Get, Param, Post } from '@nestjs/common';
 import { DIRECTIONS } from '../rules/types';
-import { fillRequest, hireForRequest, listStaffing, requestStaff } from './store';
+import { assignPerson, fillRequest, hireForRequest, listStaffing, requestStaff } from './store';
 
 const text = (v: unknown) => (typeof v === 'string' ? v.trim().slice(0, 200) : '');
 const LEVELS = ['JUNIOR', 'MID', 'SENIOR'];
@@ -32,6 +32,19 @@ export class StaffingController {
     if (startDate && !/^\d{4}-\d{2}-\d{2}$/.test(startDate)) throw new BadRequestException('Start date is not valid.');
     if (SECRET.test([need, skills, notes].join(' '))) throw new BadRequestException('Do not store passwords or credentials.');
     await requestStaff(project, need, { type, direction, skills, level, startDate, notes });
+    return listStaffing();
+  }
+
+  @Post('assign')
+  async assign(@Body() body: Record<string, unknown>) {
+    if (body?.actorRole !== 'MANAGEMENT') throw new BadRequestException('Only Management can assign a project.');
+    const to = {
+      project: text(body.project), role: text(body.role), lineManager: text(body.lineManager),
+      techLead: text(body.techLead), ktOwner: text(body.ktOwner),
+    };
+    if (Object.values(to).some((v) => !v)) throw new BadRequestException('Fill in the project, the role and the three people.');
+    const error = await assignPerson(text(body.caseId), to, Number(body.requestId) || undefined);
+    if (error) throw new BadRequestException(error);
     return listStaffing();
   }
 

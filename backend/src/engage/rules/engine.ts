@@ -129,8 +129,8 @@ function actionsFor(flag: Flag, facts: Facts): NextAction[] {
     case 'BLOCKED_NO_DETAIL': return [a('Record what is blocking, who owns it and the follow-up date', 'Additional Manager')];
     case 'UNANSWERED_REQUEST': return [a('Escalate the unanswered request', 'Additional Manager')];
     case 'STALE_STATUS': return [a('Ask for a current update, including access', 'Additional Manager')];
-    case 'MISSING_PROJECT': return [a('Confirm the project and exact role', 'HR')];
-    case 'MISSING_MANAGER': return [a('Assign and record the manager', 'HR')];
+    case 'MISSING_PROJECT': return [a('Confirm the project and exact role', 'Management')];
+    case 'MISSING_MANAGER': return [a('Assign and record the manager', 'Management')];
     case 'STATUS_DATE_MISMATCH': return [a('Check that onboarding has actually started', 'HR')];
     case 'NO_REVIEW_DATE': return [a('Schedule the final readiness review', 'Technical Lead')];
     case 'NOT_VALIDATED': return [a('Observe the activities and validate readiness', 'Technical Lead')];

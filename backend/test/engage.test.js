@@ -45,14 +45,14 @@ const send = (type, actorRole, payload) => {
 
 test("roles are limited to their own records", () => {
   assert.ok(send("VALIDATE", "ADDITIONAL_MANAGER", { sufficient: false, note: "x" }));
-  assert.ok(send("ASSIGN", "MANAGEMENT", { project: "Atlas" }));
+  assert.ok(send("ASSIGN", "HR", { project: "Atlas" })); // HR only finds people
   assert.ok(send("BLOCKER", "EMPLOYEE", { description: "password: abc" }));
 });
 
 test("Eva closes only after the technical owner validates real evidence", () => {
   assert.equal(send("VALIDATE", "TECH_LEAD", { sufficient: false, note: "Not observed yet" }), null);
   assert.equal(result().decision, "CANNOT_CLOSE");
-  send("ASSIGN", "HR", { role: "Analyst", lineManager: "Luca Gray", techLead: "TL (demo)", ktOwner: "KT (demo)" });
+  send("ASSIGN", "MANAGEMENT", { role: "Analyst", lineManager: "Luca Gray", techLead: "TL (demo)", ktOwner: "KT (demo)" });
   send("PLAN", "TECH_LEAD", { systems: ["Portal"], reviewDate: "2026-10-21", docsLocation: "/Team/Orion" });
   send("ACCESS", "EMPLOYEE", { system: "Portal", state: "USABLE" });
   for (const name of ["Standard requests", "Complex scenario 1", "Complex scenario 2"]) {
@@ -63,7 +63,7 @@ test("Eva closes only after the technical owner validates real evidence", () => 
 });
 
 test("moving to another project restarts onboarding", () => {
-  const move = { id: 1, caseId: eva.id, date: "2026-10-14", type: "ASSIGN", actorRole: "HR", payload: { project: "Atlas" } };
+  const move = { id: 1, caseId: eva.id, date: "2026-10-14", type: "ASSIGN", actorRole: "MANAGEMENT", payload: { project: "Atlas" } };
   const s = applyEvents(eva, facts["ONB-005"], [move]);
   assert.equal(s.case.movement, "REALLOCATION");
   assert.deepEqual(s.facts.activities, []);
