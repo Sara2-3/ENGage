@@ -1,5 +1,5 @@
 import { BadRequestException, Body, Controller, Get, NotFoundException, Param, Post, ForbiddenException, Query, Req, StreamableFile } from '@nestjs/common';
-import { templateAdvice } from '../ai/advisor';
+import { ActionAdvisor } from '../ai/advisor';
 import { addReview, readCv, saveCv } from '../db/repository';
 import { DIRECTIONS } from '../rules/types';
 import { validateEvent } from '../rules/workflow';
@@ -13,9 +13,12 @@ async function find(id: string) {
 
 // The roles that may open a CV. There is no login in this demo, so the role is what the page says it is.
 const CV_READERS = ['MANAGEMENT', 'HR', 'PMO', 'ADDITIONAL_MANAGER', 'TECH_LEAD', 'LINE_MANAGER', 'EMPLOYEE'];
+const BRIEF_READERS = ['PMO', 'ADDITIONAL_MANAGER', 'TECH_LEAD'];
 
 @Controller('cases')
 export class CasesController {
+  constructor(private readonly actionAdvisor: ActionAdvisor) {}
+
   @Get()
   list() {
     return listCases();
@@ -83,7 +86,34 @@ export class CasesController {
 
   @Post(':id/advice')
   async advice(@Param('id') id: string) {
-    return templateAdvice(await find(id));
+    return this.actionAdvisor.advise(await find(id));
+  }
+
+  @Post(':id/brief')
+  async brief(@Param('id') id: string, @Body() body: { actorRole?: string }) {
+    if (!BRIEF_READERS.includes(body?.actorRole ?? '')) {
+      throw new ForbiddenException('This role cannot build an evidence brief.');
+    }
+    const detail = await find(id);
+    const advice = await this.actionAdvisor.advise(detail);
+    return {
+      evidence: detail.evidence.map((item) => ({
+        id: item.id,
+        authorRole: item.authorRole,
+        quote: item.text,
+        text: item.text,
+      })),
+      gaps: {
+        flags: detail.assessment.flags,
+        unknowns: detail.assessment.checklist.filter((item) => item.state !== 'CONFIRMED'),
+      },
+      actions: detail.assessment.actions,
+      whatWouldChangeTheDecision: advice.whatWouldChangeTheDecision,
+      conflictExplanation: advice.conflictExplanation,
+      draft: advice.draft,
+      citedEvidenceIds: advice.citedEvidenceIds,
+      source: advice.source,
+    };
   }
 
   // Human review. Sending is simulated: the decision is only recorded.
