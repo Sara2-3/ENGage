@@ -1,13 +1,13 @@
 import { useCallback, useEffect, useState } from 'react';
 import { api, roles, type StaffingRequest } from './api';
 import CaseView from './CaseView';
-import AdditionalManager from './dashboards/AdditionalManager';
+import Flow from './Flow';
 import Employee from './dashboards/Employee';
 import Executive from './dashboards/Executive';
+import Follow from './dashboards/Follow';
 import Hr from './dashboards/Hr';
 import LineManager from './dashboards/LineManager';
 import Pmo from './dashboards/Pmo';
-import TechLead from './dashboards/TechLead';
 import type { Case } from './shared';
 
 // The role is kept in the address (#PMO), so a reload or a shared link opens the same dashboard.
@@ -65,11 +65,13 @@ export default function App() {
           </>
         ) : (
           <>
-            {role === 'MANAGEMENT' && <Executive cases={cases} staffing={staffing} onOpen={setSelected} onSaved={reload} />}
+            <Flow role={role} onPick={switchRole} />
+            {role === 'MANAGEMENT' &&<Executive cases={cases} staffing={staffing} onOpen={setSelected} onSaved={reload} />}
             {role === 'HR' && <Hr cases={cases} staffing={staffing} onOpen={setSelected} onCreated={created} onSaved={reload} />}
             {role === 'EMPLOYEE' && <Employee cases={cases} who={employee} onPick={setEmployee} onSaved={reload} />}
-            {role === 'ADDITIONAL_MANAGER' && <AdditionalManager cases={cases} onOpen={setSelected} />}
-            {role === 'TECH_LEAD' && <TechLead cases={cases} onOpen={setSelected} />}
+            {(role === 'ADDITIONAL_MANAGER' || role === 'TECH_LEAD') && (
+              <Follow key={role} role={role} cases={cases} onOpen={setSelected} onSaved={reload} />
+            )}
             {role === 'LINE_MANAGER' && <LineManager cases={cases} />}
             {role === 'PMO' && <Pmo cases={cases} />}
           </>

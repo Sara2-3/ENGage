@@ -13,10 +13,20 @@ export interface Review {
   at: string;
 }
 
+export interface StaffingSpecs {
+  type: 'NEW_HIRE' | 'REALLOCATION';
+  direction?: string;
+  skills: string;
+  level: string;
+  startDate: string;
+  notes: string;
+}
+
 export interface StaffingRequest {
   id: number;
   project: string;
   need: string;
+  specs: StaffingSpecs;
   status: 'OPEN' | 'FILLED';
   caseId: string | null;
   date: string;
@@ -56,6 +66,7 @@ const SCHEMA = `
     tracker_status text NOT NULL,
     last_update date NOT NULL
   );
+  ALTER TABLE cases ADD COLUMN IF NOT EXISTS direction text;
   CREATE TABLE IF NOT EXISTS evidence (
     id text PRIMARY KEY,
     case_id text NOT NULL REFERENCES cases(id),
@@ -85,6 +96,7 @@ const SCHEMA = `
     case_id text REFERENCES cases(id),
     request_date date NOT NULL
   );
+  ALTER TABLE staffing_requests ADD COLUMN IF NOT EXISTS specs jsonb NOT NULL DEFAULT '{}';
   CREATE TABLE IF NOT EXISTS reviews (
     id serial PRIMARY KEY,
     case_id text NOT NULL REFERENCES cases(id),
@@ -95,8 +107,8 @@ const SCHEMA = `
 `;
 
 const insertCase = (c: OnboardingCase) => pool!.query(
-  'INSERT INTO cases VALUES ($1,$2,$3,$4,$5,$6,$7,$8) ON CONFLICT (id) DO NOTHING',
-  [c.id, c.employee, c.startDate, c.movement, c.project, c.manager, c.trackerStatus, c.lastUpdate]);
+  'INSERT INTO cases (id, employee, start_date, movement, project, manager, tracker_status, last_update, direction) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) ON CONFLICT (id) DO NOTHING',
+  [c.id, c.employee, c.startDate, c.movement, c.project, c.manager, c.trackerStatus, c.lastUpdate, c.direction ?? null]);
 
 export async function initStorage(env = process.env) {
   if (!env.DATABASE_URL) return;
@@ -105,7 +117,11 @@ export async function initStorage(env = process.env) {
   await pool.query(SCHEMA);
 
   // Seed only what is missing, so changes made in the database are kept.
-  for (const c of seed.cases) await insertCase(c);
+  for (const c of seed.cases) {
+    await insertCase(c);
+    // Rows seeded before the column existed get their direction now.
+    if (c.direction) await pool.query('UPDATE cases SET direction = $2 WHERE id = $1 AND direction IS NULL', [c.id, c.direction]);
+  }
   for (const e of seed.evidence) {
     await pool.query('INSERT INTO evidence VALUES ($1,$2,$3,$4,$5,$6) ON CONFLICT (id) DO NOTHING',
       [e.id, e.caseId, e.date, e.authorRole, e.title, e.text]);
@@ -129,7 +145,7 @@ export async function readData(): Promise<Data> {
   if (!pool) return { cases: memory.cases, evidence: seed.evidence, facts: seed.facts, events: memory.events };
   const cases = await rows<OnboardingCase>(
     `SELECT id, employee, start_date AS "startDate", movement, project, manager,
-            tracker_status AS "trackerStatus", last_update AS "lastUpdate" FROM cases ORDER BY id`);
+            tracker_status AS "trackerStatus", last_update AS "lastUpdate", direction FROM cases ORDER BY id`);
   const evidence = await rows<Evidence>(
     `SELECT id, case_id AS "caseId", evidence_date AS date, author_role AS "authorRole", title, body AS text
      FROM evidence ORDER BY id`);
@@ -173,15 +189,15 @@ export async function addReview(r: Review) {
 export async function readStaffing(): Promise<StaffingRequest[]> {
   if (!pool) return memory.staffing;
   return rows<StaffingRequest>(
-    `SELECT id, project, need, status, case_id AS "caseId", request_date AS date FROM staffing_requests ORDER BY id`);
+    `SELECT id, project, need, specs, status, case_id AS "caseId", request_date AS date FROM staffing_requests ORDER BY id`);
 }
 
-export async function addStaffing(project: string, need: string, date: string) {
+export async function addStaffing(project: string, need: string, specs: StaffingSpecs, date: string) {
   if (!pool) {
-    memory.staffing.push({ id: memory.staffing.length + 1, project, need, status: 'OPEN', caseId: null, date });
+    memory.staffing.push({ id: memory.staffing.length + 1, project, need, specs, status: 'OPEN', caseId: null, date });
     return;
   }
-  await pool.query('INSERT INTO staffing_requests (project, need, request_date) VALUES ($1,$2,$3)', [project, need, date]);
+  await pool.query('INSERT INTO staffing_requests (project, need, specs, request_date) VALUES ($1,$2,$3,$4)', [project, need, specs, date]);
 }
 
 export async function fillStaffing(id: number, caseId: string) {

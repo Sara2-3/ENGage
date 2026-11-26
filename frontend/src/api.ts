@@ -1,14 +1,9 @@
 export type Colour = 'RED' | 'AMBER' | 'GREY' | 'GREEN';
 
-export interface Row {
-  id: string; employee: string; movement: string; project: string | null;
-  colour: Colour; decision: string; label: string;
-  startDate: string; manager: string | null; status: string; lastUpdate: string; issues: string[];
-}
 
 export interface Detail {
   asOf: string;
-  case: { id: string; employee: string; movement: string; project: string | null; startDate: string; manager: string | null; trackerStatus: string; lastUpdate: string };
+  case: { id: string; employee: string; movement: string; project: string | null; startDate: string; manager: string | null; trackerStatus: string; lastUpdate: string; direction?: string | null };
   details: Record<string, string | undefined>;
   evidence: { id: string; date: string; authorRole: string; title: string; text: string }[];
   access: { system: string; state: string; note: string; requestedOn: string | null; owner: string | null; nextFollowUp: string | null }[];
@@ -36,8 +31,20 @@ export const roles = [
 ];
 
 export interface StaffingRequest {
-  id: number; project: string; need: string; status: 'OPEN' | 'FILLED'; caseId: string | null; date: string;
+  id: number; project: string; need: string;
+  specs?: { type?: string; direction?: string; skills?: string; level?: string; startDate?: string; notes?: string };
+  status: 'OPEN' | 'FILLED'; caseId: string | null; date: string;
 }
+
+// Professional directions of new hires, with a short description of each.
+export const directionInfo: Record<string, string> = {
+  Java: 'Back-end applications and services written in Java.',
+  '.NET': 'Applications and services built with C# on the Microsoft .NET platform.',
+  Angular: 'Web interfaces built with Angular and TypeScript.',
+  SAP: 'Setting up and developing SAP business systems.',
+  'Microsoft Dynamics': 'Setting up and extending Microsoft Dynamics for customer and business processes.',
+};
+export const directions = Object.keys(directionInfo);
 
 export const words = (v: string) => v.replaceAll('_', ' ').toLowerCase().replace(/^./, (s) => s.toUpperCase());
 

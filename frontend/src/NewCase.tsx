@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { api } from './api';
+import { api, directions } from './api';
 
-const empty = { actorRole: 'HR', employee: '', movement: 'NEW_HIRE', startDate: '', project: '' };
+const empty = { actorRole: 'HR', employee: '', movement: 'NEW_HIRE', startDate: '', project: '', direction: '' };
 
 export default function NewCase({ onCreated }: { onCreated: (id: string) => void }) {
   const [draft, setDraft] = useState(empty);
@@ -29,6 +29,14 @@ export default function NewCase({ onCreated }: { onCreated: (id: string) => void
             <option value="REALLOCATION">Reallocation</option>
           </select>
         </label>
+        {draft.movement === 'NEW_HIRE' && (
+          <label>Professional direction
+            <select value={draft.direction} onChange={set('direction')} required>
+              <option value="">Choose a direction</option>
+              {directions.map((d) => <option key={d}>{d}</option>)}
+            </select>
+          </label>
+        )}
         <label>Start date<input type="date" value={draft.startDate} onChange={set('startDate')} /></label>
         <label>Project<input value={draft.project} onChange={set('project')} /></label>
         <button className="primary">Open case</button>

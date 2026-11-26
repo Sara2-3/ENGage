@@ -1,6 +1,7 @@
 import { BadRequestException, Body, Controller, Get, NotFoundException, Param, Post } from '@nestjs/common';
 import { templateAdvice } from '../ai/advisor';
 import { addReview } from '../db/repository';
+import { DIRECTIONS } from '../rules/types';
 import { getCase, listCases, openCase, overview, record } from './store';
 
 async function find(id: string) {
@@ -17,8 +18,8 @@ export class CasesController {
   }
 
   @Post()
-  async create(@Body() body: { actorRole?: string; employee?: string; movement?: string; startDate?: string; project?: string }) {
-    const { actorRole, employee, movement, startDate, project } = body ?? {};
+  async create(@Body() body: { actorRole?: string; employee?: string; movement?: string; startDate?: string; project?: string; direction?: string }) {
+    const { actorRole, employee, movement, startDate, project, direction } = body ?? {};
     if (actorRole !== 'HR') {
       throw new BadRequestException('Only HR can open a case.');
     }
@@ -26,7 +27,13 @@ export class CasesController {
       || !/^\d{4}-\d{2}-\d{2}$/.test(startDate ?? '') || Number.isNaN(Date.parse(startDate!))) {
       throw new BadRequestException('Employee, movement type and start date are required.');
     }
-    return openCase({ employee: employee.trim(), movement, startDate: startDate!, project: project?.trim() || null });
+    if (movement === 'NEW_HIRE' && !DIRECTIONS.includes(direction ?? '')) {
+      throw new BadRequestException('Choose a professional direction for the new hire.');
+    }
+    return openCase({
+      employee: employee.trim(), movement, startDate: startDate!, project: project?.trim() || null,
+      direction: movement === 'NEW_HIRE' ? direction : null,
+    });
   }
 
   @Post(':id/events')

@@ -1,12 +1,12 @@
 [
-  { "id": "ONB-001", "employee": "Mila Rowan", "startDate": "2026-10-05", "movement": "NEW_HIRE", "project": "Aurora", "manager": "Jon Vale", "trackerStatus": "Shadowing", "lastUpdate": "2026-10-13" },
+  { "id": "ONB-001", "employee": "Mila Rowan", "startDate": "2026-10-05", "movement": "NEW_HIRE", "direction": "Angular", "project": "Aurora", "manager": "Jon Vale", "trackerStatus": "Shadowing", "lastUpdate": "2026-10-13" },
   { "id": "ONB-002", "employee": "Leo Marin", "startDate": "2026-10-07", "movement": "REALLOCATION", "project": "Nimbus", "manager": "Sara Neri", "trackerStatus": "Access Pending", "lastUpdate": "2026-10-14" },
-  { "id": "ONB-003", "employee": "Nora Venn", "startDate": "2026-09-28", "movement": "NEW_HIRE", "project": null, "manager": "Tomas Reed", "trackerStatus": "On Track", "lastUpdate": "2026-09-30" },
+  { "id": "ONB-003", "employee": "Nora Venn", "startDate": "2026-09-28", "movement": "NEW_HIRE", "direction": ".NET", "project": null, "manager": "Tomas Reed", "trackerStatus": "On Track", "lastUpdate": "2026-09-30" },
   { "id": "ONB-004", "employee": "Aron Bell", "startDate": "2026-10-01", "movement": "REALLOCATION", "project": "Helios", "manager": null, "trackerStatus": "KT Started", "lastUpdate": "2026-10-11" },
-  { "id": "ONB-005", "employee": "Eva Stone", "startDate": "2026-09-21", "movement": "NEW_HIRE", "project": "Orion", "manager": "Luca Gray", "trackerStatus": "Ready with Support", "lastUpdate": "2026-10-13" },
-  { "id": "ONB-006", "employee": "Noah Lane", "startDate": "2026-10-12", "movement": "NEW_HIRE", "project": "Atlas", "manager": "Maya Ford", "trackerStatus": "Pre-Onboarding", "lastUpdate": "2026-10-12" },
+  { "id": "ONB-005", "employee": "Eva Stone", "startDate": "2026-09-21", "movement": "NEW_HIRE", "direction": "Java", "project": "Orion", "manager": "Luca Gray", "trackerStatus": "Ready with Support", "lastUpdate": "2026-10-13" },
+  { "id": "ONB-006", "employee": "Noah Lane", "startDate": "2026-10-12", "movement": "NEW_HIRE", "direction": "SAP", "project": "Atlas", "manager": "Maya Ford", "trackerStatus": "Pre-Onboarding", "lastUpdate": "2026-10-12" },
   { "id": "ONB-007", "employee": "Iris Moon", "startDate": "2026-09-15", "movement": "REALLOCATION", "project": "Nova", "manager": "Rita Cole", "trackerStatus": "On Track", "lastUpdate": "2026-09-20" },
-  { "id": "ONB-008", "employee": "Theo Park", "startDate": "2026-10-03", "movement": "NEW_HIRE", "project": "Pulse", "manager": "Mark Hale", "trackerStatus": "Blocked", "lastUpdate": "2026-10-14" },
+  { "id": "ONB-008", "employee": "Theo Park", "startDate": "2026-10-03", "movement": "NEW_HIRE", "direction": "Microsoft Dynamics", "project": "Pulse", "manager": "Mark Hale", "trackerStatus": "Blocked", "lastUpdate": "2026-10-14" },
   { "id": "ONB-009", "employee": "Lina West", "startDate": "2026-10-06", "movement": "REALLOCATION", "project": null, "manager": "Nina Cross", "trackerStatus": "KT Started", "lastUpdate": "2026-10-09" },
-  { "id": "ONB-010", "employee": "Owen Hart", "startDate": "2026-09-29", "movement": "NEW_HIRE", "project": "Vega", "manager": "Alex North", "trackerStatus": "Partially Ready", "lastUpdate": "2026-10-14" }
+  { "id": "ONB-010", "employee": "Owen Hart", "startDate": "2026-09-29", "movement": "NEW_HIRE", "direction": "Java", "project": "Vega", "manager": "Alex North", "trackerStatus": "Partially Ready", "lastUpdate": "2026-10-14" }
 ]

@@ -14,7 +14,10 @@ export interface OnboardingCase {
   manager: string | null;
   trackerStatus: string;
   lastUpdate: string;
+  direction?: string | null; // professional field of a new hire
 }
+
+export const DIRECTIONS = ['Java', '.NET', 'Angular', 'SAP', 'Microsoft Dynamics'];
 
 export interface Evidence {
   id: string;

@@ -1,5 +1,5 @@
 // Combines stored data, workflow records and the rules engine.
-import { addCase, addEvent, addStaffing, fillStaffing, readData, readReviews, readStaffing, type Data } from '../db/repository';
+import { addCase, addEvent, addStaffing, fillStaffing, readData, readReviews, readStaffing, type Data, type StaffingSpecs } from '../db/repository';
 import { assess, AS_OF } from '../rules/engine';
 import type { OnboardingCase } from '../rules/types';
 import { applyEvents, stages, validateEvent, type NewEvent } from '../rules/workflow';
@@ -83,7 +83,7 @@ export async function record(id: string, event: NewEvent): Promise<string | null
 }
 
 // Opens a new case (workflow steps 1 to 3).
-export async function openCase(input: Pick<OnboardingCase, 'employee' | 'movement' | 'startDate' | 'project'>) {
+export async function openCase(input: Pick<OnboardingCase, 'employee' | 'movement' | 'startDate' | 'project' | 'direction'>) {
   const data = await readData();
   const next = Math.max(...data.cases.map((c) => Number(c.id.slice(4)))) + 1;
   const created: OnboardingCase = {
@@ -100,13 +100,14 @@ export async function openCase(input: Pick<OnboardingCase, 'employee' | 'movemen
 // Management asks HR for people; HR fills the request with an employee (team flow).
 export const listStaffing = readStaffing;
 
-export async function requestStaff(project: string, need: string) {
-  await addStaffing(project, need, AS_OF);
+export async function requestStaff(project: string, need: string, specs: StaffingSpecs) {
+  await addStaffing(project, need, specs, AS_OF);
 }
 
 export async function fillRequest(requestId: number, caseId: string): Promise<string | null> {
   const request = (await readStaffing()).find((x) => x.id === requestId);
   if (!request || request.status !== 'OPEN') return 'This request is not open.';
+  if (request.specs.type === 'NEW_HIRE') return 'This request is for a new hire. Register the new person instead.';
   const detail = await getCase(caseId);
   if (!detail) return 'Unknown employee.';
   const { movement, project } = detail.case;
@@ -115,4 +116,14 @@ export async function fillRequest(requestId: number, caseId: string): Promise<st
   const error = await record(caseId, { type: 'ASSIGN', actorRole: 'HR', payload: { project: request.project } });
   if (!error) await fillStaffing(requestId, caseId);
   return error;
+}
+
+// A new-hire request is filled by registering the person, which starts their onboarding.
+export async function hireForRequest(requestId: number, employee: string, startDate: string): Promise<string | null> {
+  const request = (await readStaffing()).find((x) => x.id === requestId);
+  if (!request || request.status !== 'OPEN') return 'This request is not open.';
+  if (request.specs.type !== 'NEW_HIRE') return 'This request is for someone already in the company.';
+  const created = await openCase({ employee, movement: 'NEW_HIRE', startDate, project: request.project, direction: request.specs.direction ?? null });
+  await fillStaffing(requestId, created.id);
+  return null;
 }

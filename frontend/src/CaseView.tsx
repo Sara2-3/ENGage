@@ -53,7 +53,7 @@ export default function CaseView({ id, viewer, onChanged }: { id: string; viewer
           <div>
             <h2>{c.employee}</h2>
             <p className="muted">
-              {c.id} · {words(c.movement)} · {c.project ?? 'No project'} · started {c.startDate} · manager {c.manager ?? 'unknown'}
+              {c.id} · {words(c.movement)}{c.direction && ` · ${c.direction}`} · {c.project ?? 'No project'} · started {c.startDate} · manager {c.manager ?? 'unknown'}
             </p>
             <p className="muted">Tracker says “{c.trackerStatus}” (updated {c.lastUpdate})</p>
           </div>

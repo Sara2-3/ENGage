@@ -3,7 +3,7 @@
 // An account counts only when the employee can use it (starter pack section 7).
 import { useState } from 'react';
 import Actions from '../Actions';
-import { api, words } from '../api';
+import { api, directionInfo, words } from '../api';
 import { date, movement, Title, type Case } from '../shared';
 
 const accessState: Record<string, { text: string; tone: string }> = {
@@ -50,12 +50,24 @@ export default function Employee({ cases, who, onPick, onSaved }: {
   return (
     <div className="narrow">
       <Title title={`Hello, ${c.case.employee.split(' ')[0]}`}
-        need={`${movement(c)} · project ${c.case.project ?? 'not assigned yet'} · started ${date(c.case.startDate)}`} />
+        need={`${movement(c)}${c.case.direction ? ` · ${c.case.direction}` : ''} · project ${c.case.project ?? 'not assigned yet'} · started ${date(c.case.startDate)}`} />
       <label className="role">Signed in as (demo, no login)
         <select value={c.case.id} onChange={(e) => { setNote(''); onPick(e.target.value); }}>
-          {cases.map((x) => <option key={x.case.id} value={x.case.id}>{x.case.employee}</option>)}
+          {[['NEW_HIRE', 'New hires'], ['REALLOCATION', 'Reallocations']].map(([type, label]) => (
+            <optgroup key={type} label={label}>
+              {cases.filter((x) => x.case.movement === type).map((x) => (
+                <option key={x.case.id} value={x.case.id}>{x.case.employee}{x.case.direction && ` · ${x.case.direction}`}</option>
+              ))}
+            </optgroup>
+          ))}
         </select>
       </label>
+
+      <section className="card">
+        <h3>My description{c.case.direction && `: ${c.case.direction}`}</h3>
+        <p>{d.description
+          ?? (c.case.direction ? directionInfo[c.case.direction] : <span className="muted">HR has not written your description yet.</span>)}</p>
+      </section>
 
       <section className="card now">
         <p className="eyebrow">What you do now</p>

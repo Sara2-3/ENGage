@@ -1,10 +1,10 @@
 // The onboarding workflow: which role may record what, and how each record changes the case.
 // Records are never edited; the current state is the seed data plus all records in order.
-import type { Evidence, Facts, Level, OnboardingCase, AccessState } from './types';
+import { DIRECTIONS, type Evidence, type Facts, type Level, type OnboardingCase, type AccessState } from './types';
 
 export type EventType =
   | 'ASSIGN' | 'CONFIRM_START' | 'PLAN' | 'ACTIVITY' | 'ACCESS' | 'BLOCKER'
-  | 'RESOLVE_BLOCKER' | 'REQUEST_ANSWERED' | 'VALIDATE' | 'NEXT_STEP' | 'REPORT' | 'CHECKIN';
+  | 'RESOLVE_BLOCKER' | 'REQUEST_ANSWERED' | 'VALIDATE' | 'NEXT_STEP' | 'REPORT' | 'CHECKIN' | 'REQUIREMENT' | 'PROFILE';
 
 export interface NewEvent {
   type: EventType;
@@ -30,6 +30,8 @@ export const ALLOWED: Record<EventType, string[]> = {
   NEXT_STEP: ['ADDITIONAL_MANAGER', 'TECH_LEAD'],
   REPORT: ['ADDITIONAL_MANAGER', 'TECH_LEAD'],
   CHECKIN: ['EMPLOYEE'],
+  REQUIREMENT: ['ADDITIONAL_MANAGER'],
+  PROFILE: ['HR'],
 };
 
 export const REPORT_STATUSES = ['ON_TRACK', 'NEEDS_HELP', 'COMPLETED'];
@@ -78,6 +80,11 @@ export function validateEvent(e: NewEvent, facts: Facts): string | null {
         return 'Ready needs every activity recorded as independent.';
       return null;
     }
+    case 'REQUIREMENT':
+      return filled(p.text) ? null : 'Write what is required.';
+    case 'PROFILE':
+      if (p.direction && !DIRECTIONS.includes(p.direction)) return 'Unknown direction.';
+      return filled(p.description) ? null : 'Write a short description.';
     case 'CHECKIN':
       return filled(p.note) ? null : 'Write a short check-in.';
     case 'REPORT':
@@ -109,6 +116,8 @@ const describe = (e: CaseEvent): string => {
     case 'VALIDATE': return p.sufficient
       ? `Validated as ${p.outcome}. ${p.note}` : `Evidence not sufficient yet. ${p.note}`;
     case 'CHECKIN': return `Employee check-in: ${p.note}`;
+    case 'REQUIREMENT': return `Additional Manager requires: ${p.text}`;
+    case 'PROFILE': return `HR description${p.direction ? ` (${p.direction})` : ''}: ${p.description}`;
     case 'REPORT': return `Report to Line Manager: ${p.status}. ${p.note}`;
     case 'NEXT_STEP': return `${p.title} (owner: ${p.owner}${p.due ? `, due ${p.due}` : ''})`;
   }
@@ -151,6 +160,13 @@ export function applyEvents(base: OnboardingCase, seedFacts: Facts, events: Case
         }
         if (filled(p.project)) c.project = p.project;
         if (filled(p.lineManager)) c.manager = p.lineManager;
+        break;
+      case 'REQUIREMENT':
+        f.details.requirement = p.text;
+        break;
+      case 'PROFILE':
+        f.details.description = p.description;
+        if (filled(p.direction)) c.direction = p.direction;
         break;
       case 'REPORT':
         (f.reports ??= []).push({ role: e.actorRole, status: p.status, note: p.note, date: e.date });
@@ -220,7 +236,7 @@ export function applyEvents(base: OnboardingCase, seedFacts: Facts, events: Case
     }
 
     // Assigning people or planning a follow-up is not new information about progress.
-    if (e.type !== 'NEXT_STEP' && e.type !== 'ASSIGN' && e.type !== 'REPORT') c.lastUpdate = e.date;
+    if (e.type !== 'NEXT_STEP' && e.type !== 'ASSIGN' && e.type !== 'REPORT' && e.type !== 'REQUIREMENT' && e.type !== 'PROFILE') c.lastUpdate = e.date;
     evidence.push({ id: evidenceId, caseId: e.caseId, date: e.date, authorRole: e.actorRole, title: e.type, text: describe(e) });
   }
   return { case: c, facts: f, evidence };

@@ -39,14 +39,16 @@ const forms: Form[] = [
   { type: 'REPORT', title: 'Report to the Line Manager', roles: ['ADDITIONAL_MANAGER', 'TECH_LEAD'], fields: [
     { name: 'status', label: 'Status', options: ['ON_TRACK', 'NEEDS_HELP', 'COMPLETED'] },
     { name: 'note', label: 'Short note, without technical detail' }] },
+  { type: 'REQUIREMENT', title: 'Requirements for HR', roles: ['ADDITIONAL_MANAGER'], fields: [
+    { name: 'text', label: 'What should this person know or be able to do?' }] },
   { type: 'CHECKIN', title: 'Send a check-in', roles: ['EMPLOYEE'], fields: [
     { name: 'note', label: 'What can you do alone, and where do you still need help?' }] },
   { type: 'NEXT_STEP', title: 'Set the next step', roles: ['ADDITIONAL_MANAGER', 'TECH_LEAD'], fields: [
     { name: 'title', label: 'Action' }, { name: 'owner', label: 'Owner' }, { name: 'due', label: 'Due', type: 'date' }] },
 ];
 
-export default function Actions({ data, role, onSaved }: { data: Detail; role: string; onSaved: (d: Detail) => void }) {
-  const available = forms.filter((f) => f.roles.includes(role));
+export default function Actions({ data, role, only, onSaved }: { data: Detail; role: string; only?: string; onSaved: (d: Detail) => void }) {
+  const available = forms.filter((f) => f.roles.includes(role) && (!only || f.type === only));
   const [type, setType] = useState('');
   const form = available.find((f) => f.type === type) ?? available[0];
   const [values, setValues] = useState<Record<string, string>>({});
@@ -75,9 +77,11 @@ export default function Actions({ data, role, onSaved }: { data: Detail; role: s
 
   return (
     <form onSubmit={submit}>
-      <select value={form.type} onChange={(e) => { setType(e.target.value); setValues({}); setNote(''); }} aria-label="Action">
-        {available.map((f) => <option key={f.type} value={f.type}>{f.title}</option>)}
-      </select>
+      {available.length > 1 && (
+        <select value={form.type} onChange={(e) => { setType(e.target.value); setValues({}); setNote(''); }} aria-label="Action">
+          {available.map((f) => <option key={f.type} value={f.type}>{f.title}</option>)}
+        </select>
+      )}
       {form.fields.map((f) => (
         <label key={`${form.type}-${f.name}`}>
           {f.label}
