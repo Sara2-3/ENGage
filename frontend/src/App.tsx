@@ -8,6 +8,7 @@ import Hr from './dashboards/Hr';
 import LineManager from './dashboards/LineManager';
 import Pmo from './dashboards/Pmo';
 import type { Case } from './shared';
+import { useTheme } from './useTheme';
 
 // The role is kept in the address (#PMO), so a reload or a shared link opens the same dashboard.
 const roleFromHash = () => roles.find((r) => `#${r.key}` === window.location.hash)?.key ?? 'PMO';
@@ -19,6 +20,7 @@ export default function App() {
   const [selected, setSelected] = useState<string | null>(null);
   const [employee, setEmployee] = useState('ONB-002');
   const [error, setError] = useState('');
+  const { theme, toggle } = useTheme(role === 'PMO' && !selected ? 'pmo' : 'app');
 
   const refresh = useCallback(() => Promise.all([
     api<Case[]>('/cases/overview').then(setCases),
@@ -51,6 +53,11 @@ export default function App() {
             </button>
           ))}
         </nav>
+        <button type="button" className="theme" role="switch" aria-checked={theme === 'dark'} aria-label="Dark mode" onClick={toggle}>
+          <span aria-hidden="true">☀ Light</span>
+          <i aria-hidden="true" />
+          <span aria-hidden="true">☾ Dark</span>
+        </button>
         <footer>Prototype · fictional data · no login</footer>
       </aside>
 

@@ -81,7 +81,7 @@ export default function Follow({ role, cases, staffing, onOpen, onSaved }: {
             </div>
 
             <div className="summary-body">
-              <div className="ring" style={{ background: `conic-gradient(var(--brand) ${percent(c)}%, #ece9ef 0)` }}>
+              <div className="ring" style={{ background: `conic-gradient(var(--brand) ${percent(c)}%, var(--line) 0)` }}>
                 <span><strong>{percent(c)}%</strong>{phase(c)}</span>
               </div>
 

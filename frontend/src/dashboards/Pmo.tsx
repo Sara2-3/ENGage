@@ -1,10 +1,11 @@
 // PMO: the highest view, read only. Who is ready, which projects have which team, what is being
 // asked of HR and what the Line Manager is doing. Technical tasks are not shown.
-import type { ReactNode } from 'react';
+import { useState } from 'react';
 import { words, type StaffingRequest } from '../api';
 import CvLink from '../CvLink';
 import { latest } from '../Reports';
-import { completed, date, movement, Person, phase, requestState, Title, type Case } from '../shared';
+import { Table } from '../Table';
+import { completed, date, movement, Person, phase, type Case } from '../shared';
 
 const accessCodes = ['OPEN_BLOCKER', 'BLOCKED_NO_DETAIL', 'ACCESS_NOT_USABLE', 'UNANSWERED_REQUEST'];
 
@@ -16,31 +17,33 @@ const readiness = (c: Case) => {
   return { text: 'Not ready', tone: 'GREY' };
 };
 
+const isBlocked = (c: Case) => c.blockers.some((b) => !b.resolved) || c.assessment.flags.some((f) => accessCodes.includes(f.code));
+
+// The employee cards filter the readiness table; the other two lead to their own table.
+const filters: Record<string, (c: Case) => boolean> = {
+  Employees: () => true,
+  Ready: completed,
+  'At risk': (c) => c.assessment.colour === 'RED',
+  'People blocked': isBlocked,
+};
+const targets: Record<string, string> = { 'Open requests to HR': 'requests', Projects: 'projects' };
+
 const names = (values: (string | null | undefined)[]) =>
   [...new Set(values.filter(Boolean))].join(', ') || <span className="muted">Not assigned</span>;
 
-function Table({ title, head, rows, empty }: { title: string; head: string[]; rows: ReactNode[]; empty: string }) {
-  return (
-    <section className="panel">
-      <h3 className="panel-title">{title}</h3>
-      <div className="table">
-        <table className="static">
-          <thead><tr>{head.map((h) => <th key={h}>{h}</th>)}</tr></thead>
-          <tbody>{rows}</tbody>
-        </table>
-        {!rows.length && <p className="empty muted">{empty}</p>}
-      </div>
-    </section>
-  );
-}
-
 export default function Pmo({ cases, staffing, onOpen }: { cases: Case[]; staffing: StaffingRequest[]; onOpen: (id: string) => void }) {
   const projects = [...new Set([...cases.flatMap((c) => (c.case.project ? [c.case.project] : [])), ...staffing.map((s) => s.project)])].sort();
-  const requirements = cases.filter((c) => requestState(c));
-  const openRequests = staffing.filter((s) => !s.specs?.assigned).length + requirements.filter((c) => requestState(c) === 'WAITING').length;
+  const [filter, setFilter] = useState('Employees');
+  const shown = cases.filter(filters[filter]);
+  const openRequests = staffing.filter((s) => !s.specs?.assigned).length;
   const lineWork = cases.filter((c) => latest(c, 'LINE_MANAGER') || c.blockers.length
     || (c.feedback ?? []).some((r) => r.role === 'LINE_MANAGER') || c.assessment.flags.some((f) => accessCodes.includes(f.code)));
-  const openBlockers = cases.filter((c) => c.blockers.some((b) => !b.resolved) || c.assessment.flags.some((f) => accessCodes.includes(f.code))).length;
+  const openBlockers = cases.filter(isBlocked).length;
+
+  const pick = (label: string) => {
+    if (filters[label]) setFilter(label);
+    document.getElementById(targets[label] ?? 'readiness')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
 
   const kpis = [
     ['Employees', cases.length, ''],
@@ -51,17 +54,51 @@ export default function Pmo({ cases, staffing, onOpen }: { cases: Case[]; staffi
     ['Projects', projects.length, ''],
   ] as const;
 
+  // The whole portfolio in one line: ready, still in progress, at risk.
+  const ready = cases.filter(completed).length;
+  const risk = cases.filter((c) => c.assessment.colour === 'RED');
+  const share = (n: number) => (cases.length ? Math.round((n / cases.length) * 100) : 0);
+  const health = [['Ready', ready, 'ok'], ['In progress', cases.length - ready - risk.length, 'run'], ['At risk', risk.length, 'bad']] as const;
+
   return (
-    <div className="wide">
-      <Title title="PMO overview" need="Readiness, projects, requests and blockers across the whole system." />
+    <div className="wide ceo">
+      <header className="ceo-head">
+        <div className="ceo-score" style={{ background: `conic-gradient(var(--brand) ${share(ready)}%, var(--line) 0)` }}>
+          <span><strong>{share(ready)}%</strong>ready</span>
+        </div>
+        <div>
+          <p className="ceo-eyebrow">Executive view · data as of 14 Oct 2026</p>
+          <h1>PMO command center</h1>
+          <p className="muted">{ready} of {cases.length} people ready across {projects.length} projects</p>
+          <div className="ceo-health" role="img" aria-label={health.map(([label, n]) => `${label}: ${n}`).join(', ')}>
+            {health.map(([label, n, tone]) => <i key={label} className={tone} style={{ flexGrow: n }} />)}
+          </div>
+          <p className="ceo-legend">{health.map(([label, n, tone]) => <span key={label}><i className={tone} />{label} {n}</span>)}</p>
+        </div>
+        <div className="ceo-attention">
+          <h3>Needs a decision</h3>
+          {risk.slice(0, 3).map((c) => (
+            <button type="button" key={c.case.id} onClick={() => onOpen(c.case.id)}>
+              <strong>{c.case.employee}</strong>
+              <span>{c.assessment.actions[0]?.ownerRole}: {c.assessment.actions[0]?.title}</span>
+            </button>
+          ))}
+          {!risk.length && <p className="muted">Nothing is at risk.</p>}
+        </div>
+      </header>
 
       <section className="metrics">
-        {kpis.map(([label, value, tone]) => <div className={`card ${tone}`} key={label}>{label}<strong>{value}</strong></div>)}
+        {kpis.map(([label, value, tone]) => (
+          <button type="button" className={`card ${tone}`} key={label} onClick={() => pick(label)}
+            aria-pressed={filters[label] ? filter === label : undefined}>
+            {label}<strong>{value}</strong>
+          </button>
+        ))}
       </section>
 
-      <Table title="Employee readiness" empty="No employees."
+      <Table id="readiness" title={filter === 'Employees' ? 'Employee readiness' : `Employee readiness: ${filter.toLowerCase()} (${shown.length})`} empty="Nobody in this group."
         head={['Employee', 'Project', 'Phase', 'Progress', 'Readiness', 'Tracker says', 'Main problem', 'CV']}
-        rows={cases.map((c) => {
+        rows={shown.map((c) => {
           const done = c.stages.filter((s) => s.done).length;
           const state = readiness(c);
           return (
@@ -78,7 +115,7 @@ export default function Pmo({ cases, staffing, onOpen }: { cases: Case[]; staffi
           );
         })} />
 
-      <Table title="Projects and teams" empty="No projects."
+      <Table id="projects" title="Projects and teams" empty="No projects."
         head={['Project', 'Employees', 'Manager', 'Additional Manager', 'Technical Lead', 'Line Manager', 'Ready', 'Requests to HR']}
         rows={projects.map((p) => {
           const team = cases.filter((c) => c.case.project === p);
@@ -97,7 +134,7 @@ export default function Pmo({ cases, staffing, onOpen }: { cases: Case[]; staffi
           );
         })} />
 
-      <Table title="Additional Manager → HR: people requested for projects" empty="No people requested yet."
+      <Table id="requests" title="Additional Manager → HR: people requested for projects" empty="No people requested yet."
         head={['Project', 'Role', 'Skills', 'Level', 'Needed from', 'Person', 'Status']}
         rows={staffing.map((s) => (
           <tr key={s.id}>
@@ -111,18 +148,7 @@ export default function Pmo({ cases, staffing, onOpen }: { cases: Case[]; staffi
           </tr>
         ))} />
 
-      <Table title="Additional Manager → HR: requirements about employees" empty="No requirements yet."
-        head={['Employee', 'Project', 'What is required', 'Status']}
-        rows={requirements.map((c) => (
-          <tr key={c.case.id}>
-            <td><Person name={c.case.employee} onOpen={() => onOpen(c.case.id)} /></td>
-            <td>{c.case.project ?? '-'}</td>
-            <td>{c.details.requirement}</td>
-            <td><span className={`pill ${requestState(c) === 'WAITING' ? 'AMBER' : 'GREEN'}`}>{requestState(c) === 'WAITING' ? 'Waiting for HR' : 'Answered by HR'}</span></td>
-          </tr>
-        ))} />
-
-      <Table title="Line Manager: blockers, reports and reviews" empty="Nothing from the Line Manager yet."
+      <Table id="line-manager" title="Line Manager: blockers, reports and reviews" empty="Nothing from the Line Manager yet."
         head={['Employee', 'Problem', 'Blocker, owner and follow-up', 'Report to Additional Manager', 'Review']}
         rows={lineWork.map((c) => {
           const report = latest(c, 'LINE_MANAGER');
