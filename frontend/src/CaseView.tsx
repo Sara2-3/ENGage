@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import Actions from './Actions';
 import EvidenceReview from './EvidenceReview';
+import Modal from './Modal';
 import { api, roles, words, type Detail } from './api';
 
 const decisionText: Record<string, string> = {
@@ -65,81 +66,76 @@ export default function CaseView({ id, viewer, onChanged }: { id: string; viewer
         </ol>
       </div>
 
-      {id === 'ONB-005' && <EvidenceReview caseId={id} />}
+      <div className="modules">
+        <Modal title="What is wrong" summary={a.flags.length ? `${a.flags.length} issue${a.flags.length > 1 ? 's' : ''}` : 'No issue detected'}>
+          {a.flags.length
+            ? <ul>{a.flags.map((f) => <li key={f.code}>{f.message}</li>)}</ul>
+            : <p>{a.decision === 'CAN_CLOSE' ? 'No open issues.' : 'No issue detected, but readiness is not confirmed yet.'}</p>}
+        </Modal>
 
-      <div className="columns">
-      <div>
-      <div className="card">
-        <h3>What is wrong</h3>
-        {a.flags.length
-          ? <ul>{a.flags.map((f) => <li key={f.code}>{f.message}</li>)}</ul>
-          : <p>{a.decision === 'CAN_CLOSE' ? 'No open issues.' : 'No issue detected, but readiness is not confirmed yet.'}</p>}
-      </div>
+        <Modal title="Next steps" summary={a.actions[0]?.title ?? 'Nothing to do'}>
+          <ol>{a.actions.map((x) => <li key={x.title}>{x.title} <span className="muted">({x.ownerRole})</span></li>)}</ol>
+          <button className="primary" onClick={prepare}>Prepare message</button>
+          {advice && (
+            <div>
+              <p className="muted">{advice.source} · To: {advice.draft.to} · {advice.draft.subject}</p>
+              <textarea value={message} onChange={(e) => setMessage(e.target.value)} rows={10} aria-label="Message draft" />
+              <button className="primary" onClick={() => review('approved')}>Approve</button>{' '}
+              <button onClick={() => review('rejected')}>Reject</button>
+            </div>
+          )}
+          {note && <p role="status">{note}</p>}
+        </Modal>
 
-      <div className="card">
-        <h3>Evidence</h3>
-        {data.evidence.length === 0 && <p className="muted">No evidence recorded. Only the tracker row is available.</p>}
-        {data.evidence.map((e) => (
-          <blockquote key={e.id}>
-            {e.text}
-            <small>{e.id} · {words(e.authorRole)} · {e.date}</small>
-          </blockquote>
-        ))}
-      </div>
-      </div>
+        <Modal title="Evidence" summary={data.evidence.length ? `${data.evidence.length} record${data.evidence.length > 1 ? 's' : ''}` : 'None recorded'}>
+          {data.evidence.length === 0 && <p className="muted">No evidence recorded. Only the tracker row is available.</p>}
+          {data.evidence.map((e) => (
+            <blockquote key={e.id}>
+              {e.text}
+              <small>{e.id} · {words(e.authorRole)} · {e.date}</small>
+            </blockquote>
+          ))}
+        </Modal>
 
-      <div>
-      <div className="card">
-        <h3>Next steps</h3>
-        <ol>{a.actions.map((x) => <li key={x.title}>{x.title} <span className="muted">({x.ownerRole})</span></li>)}</ol>
-        <button className="primary" onClick={prepare}>Prepare message</button>
-        {advice && (
-          <div>
-            <p className="muted">{advice.source} · To: {advice.draft.to} · {advice.draft.subject}</p>
-            <textarea value={message} onChange={(e) => setMessage(e.target.value)} rows={12} aria-label="Message draft" />
-            <button className="primary" onClick={() => review('approved')}>Approve</button>{' '}
-            <button onClick={() => review('rejected')}>Reject</button>
-          </div>
+        {id === 'ONB-005' && (
+          <Modal title="Evidence analysis" summary="Simulated analysis and technical review">
+            <EvidenceReview caseId={id} />
+          </Modal>
         )}
-        {note && <p role="status">{note}</p>}
-      </div>
 
-      <details className="card">
-        <summary>Record an update</summary>
-        <label className="role">
-          Acting as (demo, no login)
-          <select value={role} onChange={(e) => setRole(e.target.value)}>
-            {roles.map((r) => <option key={r.key} value={r.key}>{r.title}</option>)}
-          </select>
-        </label>
-        <Actions key={role} data={data} role={role} onSaved={saved} />
-      </details>
+        <Modal title="Record an update" summary="Add progress, access or a blocker">
+          <label className="role">
+            Acting as (demo, no login)
+            <select value={role} onChange={(e) => setRole(e.target.value)}>
+              {roles.map((r) => <option key={r.key} value={r.key}>{r.title}</option>)}
+            </select>
+          </label>
+          <Actions key={role} data={data} role={role} onSaved={saved} />
+        </Modal>
 
-      <details className="card">
-        <summary>Readiness, access, blockers and checklist</summary>
-        <h3>Readiness by activity</h3>
-        <ul>
+        <Modal title="Details" summary="Readiness, access, blockers and checklist">
+          <h3>Readiness by activity</h3>
+          <ul>
           {data.activities.map((x) => (
-            <li key={x.name}>{x.name}: {words(x.level)} {x.validatedByTechOwner ? '(technical owner)' : '(not validated)'}</li>
+          <li key={x.name}>{x.name}: {words(x.level)} {x.validatedByTechOwner ? '(technical owner)' : '(not validated)'}</li>
           ))}
           {!data.activities.length && <li>Unknown</li>}
-        </ul>
-        <h3>Access</h3>
-        <ul>
+          </ul>
+          <h3>Access</h3>
+          <ul>
           {data.access.map((x) => (
-            <li key={x.system}>{x.system}: {words(x.state)}. {x.note}. Owner: {x.owner ?? 'unassigned'}. Follow-up: {x.nextFollowUp ?? 'not set'}</li>
+          <li key={x.system}>{x.system}: {words(x.state)}. {x.note}. Owner: {x.owner ?? 'unassigned'}. Follow-up: {x.nextFollowUp ?? 'not set'}</li>
           ))}
           {!data.access.length && <li>Unknown</li>}
-        </ul>
-        <h3>Blockers</h3>
-        <ul>
+          </ul>
+          <h3>Blockers</h3>
+          <ul>
           {data.blockers.map((x, i) => <li key={i}>{x.description} · {x.resolved ? 'resolved' : 'open'} · owner {x.owner ?? 'unassigned'}</li>)}
           {!data.blockers.length && <li>None recorded</li>}
-        </ul>
-        <h3>Onboarding checklist</h3>
-        <ul>{a.checklist.map((x) => <li key={x.item}>{x.item}: <strong>{words(x.state)}</strong></li>)}</ul>
-      </details>
-      </div>
+          </ul>
+          <h3>Onboarding checklist</h3>
+          <ul>{a.checklist.map((x) => <li key={x.item}>{x.item}: <strong>{words(x.state)}</strong></li>)}</ul>
+        </Modal>
       </div>
     </article>
   );

@@ -162,3 +162,19 @@ button.primary, .back { border-radius: 999px; }
 .item dd { margin: 0; font-weight: 600; }
 dl { margin: 0 0 16px; }
 .narrow .page-head { margin-bottom: 16px; }
+.narrow > .tabs { margin-bottom: 16px; border-bottom: 1px solid var(--line); }
+.tabs .pill { margin-left: 8px; }
+.issue { max-width: 340px; text-align: right; font-size: 13px; font-weight: 600; color: #7d4e07; }
+
+/* Case modules and their dialogs */
+.modules { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
+.module { text-align: left; padding: 18px 20px; border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); }
+.module:hover { border-color: var(--brand); background: #fdf5fa; }
+.module strong { display: block; font-size: 16px; }
+.module span { color: var(--muted); }
+.modal { width: min(680px, calc(100vw - 32px)); max-height: calc(100vh - 64px); padding: 0 24px 24px; border: 0; border-radius: var(--radius); color: var(--text); box-shadow: 0 24px 60px rgba(9, 9, 9, .35); overscroll-behavior: contain; }
+.modal::backdrop { background: rgba(9, 9, 9, .6); overflow: hidden; overscroll-behavior: contain; }
+.modal-head { position: sticky; top: 0; display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 18px 0 12px; margin-bottom: 8px; background: var(--surface); border-bottom: 1px solid var(--line); }
+.modal-head h1 { margin: 0; font-size: 20px; }
+.modal .columns { grid-template-columns: minmax(0, 1fr); }
+.modal .card { box-shadow: none; }
