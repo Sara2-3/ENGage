@@ -10,6 +10,7 @@ import Modal from '../../components/Modal';
 import { Inbox, ReportButton } from '../../components/Reports';
 import Review from '../../components/Review';
 import { date, movement, Person, phase, Title } from '../../Helper/shared';
+import { words } from '../../Helper/format';
 import { useCaseContext } from '../../Context/CaseContext';
 import { useStaffingContext } from '../../Context/StaffingContext';
 
@@ -139,6 +140,28 @@ const Follow = ({ page, role, onOpen, onSaved }) => {
                   <Modal title="Assign task">
                     <p>Technical task for <strong>{c.case.employee}</strong> on {c.case.project ?? 'no project yet'}.</p>
                     <Actions data={{ ...c, asOf: '' }} role={role} only="TASK" onSaved={onSaved} />
+                  </Modal>
+                )}
+                {role === 'TECH_LEAD' && (
+                  <Modal title="Validate readiness">
+                    <p>Readiness of <strong>{c.case.employee}</strong>, based on the work you observed.</p>
+                    {c.activities.length
+                      ? (
+                        <ul>
+                          {c.activities.map((a) => {
+                            // the newest record of this activity says who set the level
+                            const by = c.evidence.find((e) => e.id === a.evidenceIds?.at(-1))?.authorRole;
+                            return (
+                              <li key={a.name}>
+                                {a.name}: <strong>{words(a.level)}</strong>
+                                {by && ` · recorded by ${words(by)}`}{!a.validatedByTechOwner && ' · not validated'}
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      )
+                      : <p className="muted">No activities recorded yet.</p>}
+                    <Actions data={{ ...c, asOf: '' }} role={role} only="VALIDATE" onSaved={onSaved} />
                   </Modal>
                 )}
                 <ReportButton c={c} role={role} onSaved={onSaved} />

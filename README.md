@@ -59,7 +59,7 @@ Sign out and sign in again to change role.
 3. **Additional Manager** → *Assign projects* → *Assign project*.
 4. **Technical Lead** → choose the person → *Assign task*; *Open case* → *Record an update* → *Set the learning plan*.
 5. **Employee** → pick the person → *My work* → *It works*; *My profile* → *Mark as done*.
-6. **Technical Lead** → *Open case* → *Record an update*: *Record activity progress* (Independent), then *Review evidence and decide*; report to the Line Manager.
+6. **Technical Lead** → *Open case* → *Record an update*: *Record activity progress* (Independent); back on the dashboard *Validate readiness*; report to the Line Manager.
 7. **Line Manager** → *Blockers*: follow a blocker to closure; *Progress* → report to the Additional Manager.
 8. **Additional Manager** → *Report to Management*.
 9. **Management** and **PMO** see the result.

@@ -19,7 +19,7 @@ Dy klikime mbi `start.cmd`. Hapet `http://localhost:5173`. Për ta ndalur, mbyll
 | 3 | Additional Manager | cakton projektin dhe ekipin | Assign projects → Assign project |
 | 4 | Technical Lead | jep detyra dhe plan mësimi | zgjedh personin → Assign task; Open case → Record an update → Set the learning plan |
 | 5 | Employee | konfirmon aksesin, kryen detyrat | zgjedh personin; My work → It works; My profile → Mark as done |
-| 6 | Technical Lead | konfirmon gatishmërinë, raporton | Open case → Record an update → Record activity progress; Review evidence and decide; Report to Line Manager |
+| 6 | Technical Lead | konfirmon gatishmërinë, raporton | Open case → Record an update → Record activity progress; Validate readiness; Report to Line Manager |
 | 7 | Line Manager | heq pengesat, raporton | Blockers → Assign owner and date, Mark as fixed; Progress → Report to Additional Manager |
 | 8 | Additional Manager | raporton | Needs my action → Report to Management |
 | 9 | Management dhe PMO | shohin rezultatin | Overview |
