@@ -44,7 +44,7 @@ flowchart LR
     TL[Technical Lead confirms readiness] --> UI
 ```
 
-The target React frontend calls the NestJS API. NestJS stores application data in PostgreSQL and sends fictional onboarding evidence to OpenAI only when the PMO Coordinator requests analysis. The backend uses structured output, validates the response, confirms that every cited source belongs to the case, and checks every quote against the supplied source text before returning analysis. The result is a suggestion for PMO review, while the Technical Lead confirms final technical readiness. The OpenAI API key remains on the server and is never exposed to the browser.
+The target React frontend calls the NestJS API. NestJS stores application data and PMO-confirmed follow-up tasks in PostgreSQL and sends fictional onboarding evidence to OpenAI only when the PMO Coordinator requests analysis. The backend uses structured output, validates the response, confirms that every cited source belongs to the case, and checks every quote against the supplied source text before returning analysis. PMO can confirm a technical-review task independently of OpenAI; PostgreSQL prevents duplicate open technical reviews for the same case. The result is a suggestion for PMO review, while the Technical Lead confirms final technical readiness. The OpenAI API key remains on the server and is never exposed to the browser.
 
 Docker Compose is planned to start the frontend, API, and PostgreSQL services together on a developer's machine, with service configuration supplied through environment variables. The repository now contains the React frontend, NestJS API, and PostgreSQL health check, but it does not yet contain a Compose file. No deployment provider or public URL could be verified from the repository.
 
@@ -100,6 +100,14 @@ The commit history gives a clear order for the work currently present: the Strea
 - **Relevant files:** `backend/.env.example`, `backend/package.json`, `backend/package-lock.json`, `backend/src/analysis.model.ts`, `backend/src/analysis.schema.ts`, `backend/src/analysis.service.ts`, `backend/src/openai-analysis.model.ts`, `backend/src/onboarding.controller.ts`, `backend/src/app.module.ts`, `backend/test/analysis.service.test.js`, `frontend/src/App.tsx`, `frontend/src/styles.css`, `README.md`, `docs/DEVELOPMENT_LOG.md`.
 - **How to verify:** Build both applications, then run `npm.cmd run test:analysis --prefix backend`. The mocked checks accept valid citations and reject both an unknown source ID and a quote missing from its source; all three checks passed in the implementation environment. PostgreSQL, Docker, `OPENAI_API_KEY`, and `OPENAI_MODEL` were unavailable there, so the live POST endpoint and browser analysis flow remain pending.
 
+### 7. Step 5 - Persistent technical-review assignment
+
+- **Status:** Implemented
+- **What changed:** Added a `follow_up_tasks` PostgreSQL table linked to onboarding cases and a partial unique index that permits at most one open technical review per case. Added GET and POST follow-up endpoints with case and description validation, parameterized queries, safe database errors, and conflict handling that returns the existing open task without overwriting its description. The React case page now loads saved tasks on open, offers an editable manual description, prefills it from an AI suggestion when available, disables assignment while saving, and displays the persisted Technical Lead task with **Open** status.
+- **Why it matters:** Lets PMO turn reviewed evidence into an owned, durable action while keeping task creation separate from OpenAI, the reported tracker status, and the Technical Lead's final readiness decision.
+- **Relevant files:** `backend/db/schema.sql`, `backend/package.json`, `backend/src/follow-up.service.ts`, `backend/src/onboarding.controller.ts`, `backend/src/app.module.ts`, `backend/test/follow-up.service.test.js`, `frontend/src/App.tsx`, `frontend/src/styles.css`, `README.md`, `docs/DEVELOPMENT_LOG.md`.
+- **How to verify:** Apply the schema, open `ONB-005`, assign the technical review, submit it again, refresh React, and confirm one task remains with its original description, Technical Lead assignee, and **Open** status. Both production builds passed. The existing three analysis tests and two mocked follow-up tests passed. PostgreSQL and Docker were unavailable in the implementation environment, so live persistence, concurrent duplicate handling, API GET/POST, and browser refresh verification remain pending.
+
 ## 4. Target-stack build order
 
 Add future milestones using the same Status / What changed / Why it matters / Relevant files / How to verify format used above.
@@ -107,7 +115,7 @@ Add future milestones using the same Status / What changed / Why it matters / Re
 ### 1. Set up React, NestJS, and PostgreSQL
 
 - **Status:** Implemented
-- **What changed:** Added the React frontend, NestJS API, PostgreSQL connection through `DATABASE_URL`, and database-backed health endpoint. Full Docker Compose setup remains Step 5.
+- **What changed:** Added the React frontend, NestJS API, PostgreSQL connection through `DATABASE_URL`, and database-backed health endpoint. Full Docker Compose setup remains Step 6.
 - **Why it matters:** Creates the target application foundation and persistent data layer.
 - **Relevant files:** `frontend/`, `backend/`, `.gitignore`, `README.md`.
 - **How to verify:** Follow the foundation commands in `README.md`; confirm HTTP 200 from `/health` and **Services connected** in React when PostgreSQL is running.
@@ -130,13 +138,13 @@ Add future milestones using the same Status / What changed / Why it matters / Re
 
 ### 4. Let PMO assign and save a technical review task
 
-- **Status:** Planned
-- **What changed:** Not started; the current suggested action is fixed display text only.
+- **Status:** Implemented
+- **What changed:** Added persistent follow-up storage, idempotent open-task creation, GET/POST endpoints, mocked service tests, and the React assignment and reload flow.
 - **Why it matters:** Turns an identified evidence gap into owned, persistent follow-up work.
-- **Relevant files:** To be created.
-- **How to verify:** Assign a review to the Technical Lead, reload the case, and confirm the task and ownership persist.
+- **Relevant files:** `backend/db/schema.sql`, `backend/src/follow-up.service.ts`, `backend/src/onboarding.controller.ts`, `backend/test/follow-up.service.test.js`, `frontend/src/App.tsx`, `frontend/src/styles.css`.
+- **How to verify:** Assign a review to the Technical Lead, submit it again, reload the case, and confirm one open task with the original description and ownership persists.
 
-### 5. Run with Docker Compose and verify the deployed demo
+### 5. Step 6 - Run with Docker Compose and verify the deployed demo
 
 - **Status:** Planned
 - **What changed:** Not started; no Docker or deployment configuration is present.

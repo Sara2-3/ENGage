@@ -35,8 +35,23 @@ interface EvidenceAnalysis {
 
 type AnalysisState = "idle" | "loading" | "ready" | "error";
 
+interface FollowUpTask {
+  taskId: string;
+  caseId: string;
+  taskType: string;
+  description: string;
+  assigneeRole: string;
+  status: string;
+  createdAt: string;
+}
+
+type FollowUpLoadState = "loading" | "ready" | "error";
+type FollowUpSaveState = "idle" | "saving" | "error";
+
 const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:3000";
 const DEMO_CASE_ID = "ONB-005";
+const DEFAULT_TECHNICAL_REVIEW =
+  "Ask the Technical Lead to review the two complex scenarios and record what Eva can perform independently.";
 
 function StatusMessage({ state }: { state: Exclude<ViewState, "ready"> }) {
   const messages = {
@@ -69,6 +84,49 @@ function StatusMessage({ state }: { state: Exclude<ViewState, "ready"> }) {
 function CaseView({ onboardingCase }: { onboardingCase: OnboardingCase }) {
   const [analysisState, setAnalysisState] = useState<AnalysisState>("idle");
   const [analysis, setAnalysis] = useState<EvidenceAnalysis | null>(null);
+  const [followUps, setFollowUps] = useState<FollowUpTask[]>([]);
+  const [followUpLoadState, setFollowUpLoadState] =
+    useState<FollowUpLoadState>("loading");
+  const [followUpSaveState, setFollowUpSaveState] =
+    useState<FollowUpSaveState>("idle");
+  const [taskDescription, setTaskDescription] = useState(
+    DEFAULT_TECHNICAL_REVIEW,
+  );
+  const openTechnicalReview = followUps.find(
+    (task) => task.taskType === "Technical Review" && task.status === "Open",
+  );
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    async function loadFollowUps() {
+      setFollowUpLoadState("loading");
+
+      try {
+        const response = await fetch(
+          `${API_URL}/onboarding/cases/${onboardingCase.caseId}/follow-ups`,
+          { signal: controller.signal },
+        );
+
+        if (!response.ok) {
+          setFollowUpLoadState("error");
+          return;
+        }
+
+        const tasks = (await response.json()) as FollowUpTask[];
+        setFollowUps(tasks);
+        setFollowUpLoadState("ready");
+      } catch (error) {
+        if (error instanceof DOMException && error.name === "AbortError") {
+          return;
+        }
+        setFollowUpLoadState("error");
+      }
+    }
+
+    void loadFollowUps();
+    return () => controller.abort();
+  }, [onboardingCase.caseId]);
 
   async function analyzeEvidence() {
     setAnalysisState("loading");
@@ -87,9 +145,49 @@ function CaseView({ onboardingCase }: { onboardingCase: OnboardingCase }) {
 
       const result = (await response.json()) as EvidenceAnalysis;
       setAnalysis(result);
+      if (!openTechnicalReview) {
+        setTaskDescription(result.suggestedNextAction.text);
+      }
       setAnalysisState("ready");
     } catch {
       setAnalysisState("error");
+    }
+  }
+
+  async function assignTechnicalReview() {
+    const description = taskDescription.trim();
+
+    if (!description) {
+      setFollowUpSaveState("error");
+      return;
+    }
+
+    setFollowUpSaveState("saving");
+
+    try {
+      const response = await fetch(
+        `${API_URL}/onboarding/cases/${onboardingCase.caseId}/follow-ups`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ description }),
+        },
+      );
+
+      if (!response.ok) {
+        setFollowUpSaveState("error");
+        return;
+      }
+
+      const savedTask = (await response.json()) as FollowUpTask;
+      setFollowUps((currentTasks) => [
+        savedTask,
+        ...currentTasks.filter((task) => task.taskId !== savedTask.taskId),
+      ]);
+      setFollowUpLoadState("ready");
+      setFollowUpSaveState("idle");
+    } catch {
+      setFollowUpSaveState("error");
     }
   }
 
@@ -233,6 +331,89 @@ function CaseView({ onboardingCase }: { onboardingCase: OnboardingCase }) {
             </p>
           </div>
         )}
+      </section>
+
+      <section className="follow-up-panel">
+        <p className="eyebrow">PMO follow-up</p>
+        <h2>Technical review task</h2>
+
+        {followUpLoadState === "loading" && (
+          <p className="follow-up-message" aria-live="polite">
+            Loading saved follow-up tasks...
+          </p>
+        )}
+
+        {followUpLoadState === "error" && (
+          <p className="follow-up-error" role="alert">
+            Saved follow-up tasks could not be loaded. Refresh the page after
+            checking the API and database.
+          </p>
+        )}
+
+        {followUpLoadState !== "loading" &&
+          (openTechnicalReview ? (
+            <article className="task-card">
+            <div className="task-card__header">
+              <div>
+                <span className="task-status">{openTechnicalReview.status}</span>
+                <h3>{openTechnicalReview.taskType}</h3>
+              </div>
+              <span className="task-assignee">
+                {openTechnicalReview.assigneeRole}
+              </span>
+            </div>
+            <p>{openTechnicalReview.description}</p>
+            <p className="task-created">
+              Created {new Date(openTechnicalReview.createdAt).toLocaleString()}
+            </p>
+            </article>
+          ) : (
+            <div className="task-form">
+            <p>
+              Review and edit the task before assigning it. Final technical
+              readiness remains with the Technical Lead.
+            </p>
+            <label htmlFor="technical-review-description">
+              Task description
+            </label>
+            <textarea
+              id="technical-review-description"
+              maxLength={2000}
+              onChange={(event) => {
+                setTaskDescription(event.target.value);
+                if (followUpSaveState === "error") {
+                  setFollowUpSaveState("idle");
+                }
+              }}
+              rows={4}
+              value={taskDescription}
+            />
+            <div className="task-form__footer">
+              <p>
+                <strong>Assignee role:</strong> Technical Lead
+              </p>
+              <button
+                className="assign-button"
+                disabled={
+                  followUpSaveState === "saving" ||
+                  !taskDescription.trim()
+                }
+                onClick={() => void assignTechnicalReview()}
+                type="button"
+              >
+                {followUpSaveState === "saving"
+                  ? "Saving technical review..."
+                  : "Assign technical review"}
+              </button>
+            </div>
+            {followUpSaveState === "error" && (
+              <p className="follow-up-error" role="alert">
+                The technical review task could not be saved. Check the API and
+                database, then try again.
+              </p>
+            )}
+            </div>
+          ))}
       </section>
     </>
   );

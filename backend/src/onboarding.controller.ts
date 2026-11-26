@@ -1,14 +1,20 @@
-import { Controller, Get, Param, Post } from "@nestjs/common";
+import { Body, Controller, Get, Param, Post } from "@nestjs/common";
 
 import { AnalysisService } from "./analysis.service";
 import { EvidenceAnalysis } from "./analysis.schema";
+import { FollowUpService, FollowUpTask } from "./follow-up.service";
 import { OnboardingCase, OnboardingService } from "./onboarding.service";
+
+interface CreateFollowUpBody {
+  description?: unknown;
+}
 
 @Controller("onboarding/cases")
 export class OnboardingController {
   constructor(
     private readonly onboardingService: OnboardingService,
     private readonly analysisService: AnalysisService,
+    private readonly followUpService: FollowUpService,
   ) {}
 
   @Get(":caseId")
@@ -19,5 +25,21 @@ export class OnboardingController {
   @Post(":caseId/analyze")
   analyzeCase(@Param("caseId") caseId: string): Promise<EvidenceAnalysis> {
     return this.analysisService.analyzeCase(caseId);
+  }
+
+  @Get(":caseId/follow-ups")
+  getFollowUps(@Param("caseId") caseId: string): Promise<FollowUpTask[]> {
+    return this.followUpService.listForCase(caseId);
+  }
+
+  @Post(":caseId/follow-ups")
+  createFollowUp(
+    @Param("caseId") caseId: string,
+    @Body() body: CreateFollowUpBody,
+  ): Promise<FollowUpTask> {
+    return this.followUpService.createTechnicalReview(
+      caseId,
+      body?.description,
+    );
   }
 }

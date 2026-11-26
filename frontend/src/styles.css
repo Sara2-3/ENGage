@@ -61,6 +61,7 @@ summary {
 .content-section,
 .review-note,
 .analysis-panel,
+.follow-up-panel,
 .message {
   border: 1px solid #d5e2d9;
   border-radius: 1.25rem;
@@ -150,7 +151,8 @@ h2 {
 
 .content-section,
 .review-note,
-.analysis-panel {
+.analysis-panel,
+.follow-up-panel {
   margin-top: 1rem;
   padding: clamp(1.4rem, 4vw, 2.2rem);
 }
@@ -363,6 +365,126 @@ h2 {
   line-height: 1.55;
 }
 
+.follow-up-message {
+  color: #607167;
+}
+
+.follow-up-error {
+  margin: 1rem 0 0;
+  padding: 1rem;
+  border-radius: 0.75rem;
+  background: #fff0ed;
+  color: #8d2d20;
+  line-height: 1.5;
+}
+
+.task-card {
+  padding: 1.15rem;
+  border: 1px solid #bcd9c6;
+  border-radius: 0.9rem;
+  background: #f2faf5;
+}
+
+.task-card__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.task-card h3 {
+  margin: 0.4rem 0 0;
+}
+
+.task-status,
+.task-assignee {
+  display: inline-block;
+  padding: 0.3rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.74rem;
+  font-weight: 800;
+}
+
+.task-status {
+  background: #d9f0e1;
+  color: #166039;
+}
+
+.task-assignee {
+  background: #e7ece9;
+  color: #42564a;
+}
+
+.task-card > p {
+  margin: 1rem 0 0;
+  line-height: 1.6;
+}
+
+.task-created {
+  color: #607167;
+  font-size: 0.78rem;
+}
+
+.task-form > p {
+  color: #607167;
+  line-height: 1.55;
+}
+
+.task-form label {
+  display: block;
+  margin-bottom: 0.45rem;
+  font-size: 0.85rem;
+  font-weight: 800;
+}
+
+.task-form textarea {
+  width: 100%;
+  resize: vertical;
+  padding: 0.85rem;
+  border: 1px solid #b9c9bf;
+  border-radius: 0.7rem;
+  color: #17211b;
+  background: #fbfdfb;
+  line-height: 1.5;
+}
+
+.task-form textarea:focus {
+  border-color: #397354;
+  outline: 3px solid rgba(57, 115, 84, 0.15);
+}
+
+.task-form__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 0.85rem;
+}
+
+.task-form__footer p {
+  margin: 0;
+}
+
+.assign-button {
+  flex: 0 0 auto;
+  padding: 0.75rem 1rem;
+  border: 0;
+  border-radius: 0.7rem;
+  background: #173f2a;
+  color: #ffffff;
+  cursor: pointer;
+  font-weight: 750;
+}
+
+.assign-button:hover:not(:disabled) {
+  background: #245d3e;
+}
+
+.assign-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
 .message {
   display: flex;
   gap: 1rem;
@@ -441,5 +563,15 @@ h2 {
 
   .analysis-summary {
     grid-template-columns: 1fr;
+  }
+
+  .task-card__header,
+  .task-form__footer {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .assign-button {
+    width: 100%;
   }
 }

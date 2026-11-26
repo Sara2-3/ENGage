@@ -2,6 +2,7 @@ import { Module } from "@nestjs/common";
 
 import { EVIDENCE_ANALYSIS_MODEL } from "./analysis.model";
 import { AnalysisService } from "./analysis.service";
+import { FollowUpService } from "./follow-up.service";
 import { HealthController } from "./health.controller";
 import { DatabaseService } from "./database.service";
 import { OpenAiEvidenceAnalysisModel } from "./openai-analysis.model";
@@ -13,6 +14,7 @@ import { OnboardingService } from "./onboarding.service";
   providers: [
     AnalysisService,
     DatabaseService,
+    FollowUpService,
     OnboardingService,
     OpenAiEvidenceAnalysisModel,
     {
