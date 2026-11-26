@@ -17,6 +17,24 @@ interface OnboardingCase {
   evidence: Evidence[];
 }
 
+interface EvidenceAnalysis {
+  findings: Array<{
+    claim: string;
+    sourceId: string;
+    quote: string;
+  }>;
+  evidenceGap: {
+    text: string;
+    sourceIds: string[];
+  };
+  suggestedNextAction: {
+    text: string;
+    sourceIds: string[];
+  };
+}
+
+type AnalysisState = "idle" | "loading" | "ready" | "error";
+
 const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:3000";
 const DEMO_CASE_ID = "ONB-005";
 
@@ -49,6 +67,32 @@ function StatusMessage({ state }: { state: Exclude<ViewState, "ready"> }) {
 }
 
 function CaseView({ onboardingCase }: { onboardingCase: OnboardingCase }) {
+  const [analysisState, setAnalysisState] = useState<AnalysisState>("idle");
+  const [analysis, setAnalysis] = useState<EvidenceAnalysis | null>(null);
+
+  async function analyzeEvidence() {
+    setAnalysisState("loading");
+    setAnalysis(null);
+
+    try {
+      const response = await fetch(
+        `${API_URL}/onboarding/cases/${onboardingCase.caseId}/analyze`,
+        { method: "POST" },
+      );
+
+      if (!response.ok) {
+        setAnalysisState("error");
+        return;
+      }
+
+      const result = (await response.json()) as EvidenceAnalysis;
+      setAnalysis(result);
+      setAnalysisState("ready");
+    } catch {
+      setAnalysisState("error");
+    }
+  }
+
   return (
     <>
       <section className="case-header">
@@ -121,6 +165,74 @@ function CaseView({ onboardingCase }: { onboardingCase: OnboardingCase }) {
           supplied evidence. The reported tracker status remains Ready with
           Support.
         </p>
+      </section>
+
+      <section className="analysis-panel">
+        <div className="analysis-panel__header">
+          <div>
+            <p className="eyebrow">AI-assisted review</p>
+            <h2>Evidence analysis</h2>
+            <p>
+              Generate traceable suggestions from the original case evidence.
+            </p>
+          </div>
+          <button
+            className="analyze-button"
+            disabled={analysisState === "loading"}
+            onClick={() => void analyzeEvidence()}
+            type="button"
+          >
+            {analysisState === "loading"
+              ? "Analyzing evidence..."
+              : "Analyze evidence"}
+          </button>
+        </div>
+
+        {analysisState === "error" && (
+          <p className="analysis-error" role="alert">
+            Evidence analysis is unavailable. The reported status and original
+            emails remain unchanged; check the backend configuration and try
+            again.
+          </p>
+        )}
+
+        {analysisState === "ready" && analysis && (
+          <div className="analysis-results">
+            <h3>What the evidence supports</h3>
+            <div className="finding-list">
+              {analysis.findings.map((finding, index) => (
+                <article className="finding" key={`${finding.sourceId}-${index}`}>
+                  <span className="source-label">{finding.sourceId}</span>
+                  <p>{finding.claim}</p>
+                  <blockquote>{finding.quote}</blockquote>
+                </article>
+              ))}
+            </div>
+
+            <div className="analysis-summary">
+              <article>
+                <h3>What still needs verification</h3>
+                <p>{analysis.evidenceGap.text}</p>
+                <p className="source-trace">
+                  Sources: {analysis.evidenceGap.sourceIds.join(", ")}
+                </p>
+              </article>
+              <article>
+                <h3>Suggested next action</h3>
+                <p>{analysis.suggestedNextAction.text}</p>
+                <p className="source-trace">
+                  Sources: {analysis.suggestedNextAction.sourceIds.join(", ")}
+                </p>
+              </article>
+            </div>
+
+            <p className="analysis-disclaimer">
+              This is an AI-generated suggestion for PMO review. The reported
+              tracker status remains unchanged, and the Technical Lead confirms
+              final technical readiness.
+            </p>
+          </div>
+        )}
       </section>
     </>
   );

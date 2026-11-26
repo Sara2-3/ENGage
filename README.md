@@ -18,7 +18,7 @@ The repository also has the current React/NestJS implementation:
 - a NestJS and TypeScript API in `backend/`; and
 - a PostgreSQL schema and idempotent seed for Eva's case and evidence.
 
-The React page loads `ONB-005` from `GET /onboarding/cases/:caseId`, displays the reported tracker status and both source emails, and explains why final technical readiness still needs review. `GET /health` continues to run `SELECT 1` through the PostgreSQL connection supplied in `DATABASE_URL`.
+The React page loads `ONB-005` from `GET /onboarding/cases/:caseId`, displays the reported tracker status and both source emails, and explains why final technical readiness still needs review. The PMO Coordinator can request an on-demand, source-linked OpenAI analysis without changing the tracker status. `GET /health` continues to run `SELECT 1` through the PostgreSQL connection supplied in `DATABASE_URL`.
 
 ## Run the current prototype
 
@@ -51,6 +51,8 @@ Configure the current PowerShell session after replacing the placeholder values 
 
 ```powershell
 $env:DATABASE_URL = "postgresql://engage_user:change_me@localhost:5432/engage"
+$env:OPENAI_API_KEY = "replace_with_your_openai_api_key"
+$env:OPENAI_MODEL = "replace_with_a_structured_output_model"
 ```
 
 Create the tables and seed the fictional demo data. The seed can be run repeatedly; `ONB-005` remains one case with two evidence records.
@@ -76,6 +78,8 @@ npm.cmd run dev --prefix frontend
 
 Open `http://localhost:5173`. The PMO view should show Eva Stone, Project Orion, `ONB-005`, **Reported status: Ready with Support**, two expandable email records, and the **Technical review needed** note. It shows a loading state while requesting the case, a not-found state for an unknown or unseeded case, and an unavailable state when the API or database cannot be reached.
 
+Click **Analyze evidence** to call `POST /onboarding/cases/ONB-005/analyze`. The result shows source-linked findings and exact quotes, followed by **What still needs verification** and **Suggested next action**. The output is an AI-generated suggestion for PMO review; the Technical Lead remains responsible for final technical readiness. The original emails and tracker status remain visible if analysis fails.
+
 In a third PowerShell window, verify the API responses:
 
 ```powershell
@@ -90,7 +94,7 @@ try {
 
 The first two requests should succeed, and the unknown case check should print `404`.
 
-Example configuration is available in `backend/.env.example` and `frontend/.env.example`. Do not commit real credentials. The PowerShell commands above set the variables for the current terminal session; the backend keeps `DATABASE_URL` server-side.
+Example configuration is available in `backend/.env.example` and `frontend/.env.example`. Do not commit real credentials. The PowerShell commands above set the variables for the current terminal session; the backend keeps `DATABASE_URL` and `OPENAI_API_KEY` server-side.
 
 Build both applications from the repository root with:
 
@@ -99,8 +103,17 @@ npm.cmd run build --prefix backend
 npm.cmd run build --prefix frontend
 ```
 
+Run the mocked backend citation checks after building the backend:
+
+```powershell
+npm.cmd run build --prefix backend
+npm.cmd run test:analysis --prefix backend
+```
+
+The tests accept a valid source-linked analysis and reject unknown source IDs and quotes that are not present in the cited email.
+
 ## Target stack and deployment
 
-The target product stack is React with TypeScript, NestJS with TypeScript, PostgreSQL, OpenAI, and Docker. The React/NestJS/PostgreSQL case flow is implemented locally. OpenAI integration, follow-up task assignment, full Docker Compose setup, and deployment are not implemented. No deployment provider or verified public demo URL is recorded in the repository.
+The target product stack is React with TypeScript, NestJS with TypeScript, PostgreSQL, OpenAI, and Docker. The React/NestJS/PostgreSQL case flow and on-demand OpenAI evidence analysis are implemented locally. Follow-up task assignment, full Docker Compose setup, and deployment are not implemented. No deployment provider or verified public demo URL is recorded in the repository.
 
 See [Development Log](docs/DEVELOPMENT_LOG.md) for the workflow, target architecture, verified build history, and next steps.

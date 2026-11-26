@@ -44,7 +44,7 @@ flowchart LR
     TL[Technical Lead confirms readiness] --> UI
 ```
 
-The target React frontend calls the NestJS API. NestJS stores application data in PostgreSQL and sends fictional onboarding evidence to OpenAI to extract claims. The backend must validate the structured response and confirm that every cited quote exists in the supplied source text before presenting analysis to the PMO Coordinator. The PMO Coordinator confirms follow-up work, and the Technical Lead confirms final technical readiness. The OpenAI API key must remain on the server and must never be exposed to the browser.
+The target React frontend calls the NestJS API. NestJS stores application data in PostgreSQL and sends fictional onboarding evidence to OpenAI only when the PMO Coordinator requests analysis. The backend uses structured output, validates the response, confirms that every cited source belongs to the case, and checks every quote against the supplied source text before returning analysis. The result is a suggestion for PMO review, while the Technical Lead confirms final technical readiness. The OpenAI API key remains on the server and is never exposed to the browser.
 
 Docker Compose is planned to start the frontend, API, and PostgreSQL services together on a developer's machine, with service configuration supplied through environment variables. The repository now contains the React frontend, NestJS API, and PostgreSQL health check, but it does not yet contain a Compose file. No deployment provider or public URL could be verified from the repository.
 
@@ -92,6 +92,14 @@ The commit history gives a clear order for the work currently present: the Strea
 - **Relevant files:** `requirements.txt`, `backend/db/schema.sql`, `backend/db/seed.sql`, `backend/scripts/run-sql.js`, `backend/package.json`, `backend/src/database.service.ts`, `backend/src/onboarding.controller.ts`, `backend/src/onboarding.service.ts`, `backend/src/app.module.ts`, `frontend/src/App.tsx`, `frontend/src/styles.css`, `README.md`, `docs/DEVELOPMENT_LOG.md`.
 - **How to verify:** Follow the database setup, double-seed, and start commands in `README.md`. Confirm `/health` returns HTTP 200, `/onboarding/cases/ONB-005` returns one case with two evidence items, and an unknown ID returns HTTP 404. In React, confirm the Eva Stone header, Project Orion, reported status, Email 3, Email 4, and technical review note. Both production builds passed in the implementation environment. PostgreSQL was unavailable there, so schema execution, double-seed counts, live 200/404 responses, and browser rendering against real data remain pending.
 
+### 6. Step 4 - On-demand OpenAI evidence analysis
+
+- **Status:** Implemented
+- **What changed:** Added `POST /onboarding/cases/:caseId/analyze`, the official OpenAI Node SDK, and a Zod structured-output schema. The backend reloads the case evidence from PostgreSQL, sends only the fictional case evidence to OpenAI, treats email content as untrusted source material, and validates the returned source IDs and exact quotes before returning the result. The React case page now starts analysis only when PMO clicks **Analyze evidence**, disables the button while pending, shows source-linked findings, an evidence gap, and a suggested next action, and keeps original evidence visible on failure.
+- **Why it matters:** Gives the PMO Coordinator a traceable evidence summary without treating model output as final readiness or allowing it to change the tracker status. The Technical Lead remains the readiness owner.
+- **Relevant files:** `backend/.env.example`, `backend/package.json`, `backend/package-lock.json`, `backend/src/analysis.model.ts`, `backend/src/analysis.schema.ts`, `backend/src/analysis.service.ts`, `backend/src/openai-analysis.model.ts`, `backend/src/onboarding.controller.ts`, `backend/src/app.module.ts`, `backend/test/analysis.service.test.js`, `frontend/src/App.tsx`, `frontend/src/styles.css`, `README.md`, `docs/DEVELOPMENT_LOG.md`.
+- **How to verify:** Build both applications, then run `npm.cmd run test:analysis --prefix backend`. The mocked checks accept valid citations and reject both an unknown source ID and a quote missing from its source; all three checks passed in the implementation environment. PostgreSQL, Docker, `OPENAI_API_KEY`, and `OPENAI_MODEL` were unavailable there, so the live POST endpoint and browser analysis flow remain pending.
+
 ## 4. Target-stack build order
 
 Add future milestones using the same Status / What changed / Why it matters / Relevant files / How to verify format used above.
@@ -114,11 +122,11 @@ Add future milestones using the same Status / What changed / Why it matters / Re
 
 ### 3. Add OpenAI evidence analysis
 
-- **Status:** Planned
-- **What changed:** Not started; no OpenAI call exists in the current code.
+- **Status:** Implemented
+- **What changed:** Added on-demand OpenAI structured analysis, backend schema and citation validation, safe error handling, mocked validation tests, and the React analysis workflow.
 - **Why it matters:** Extracts evidence claims while keeping source attribution reviewable.
-- **Relevant files:** To be created.
-- **How to verify:** Run analysis on the fictional emails, validate the response schema, and confirm every cited quote is present verbatim in its source text.
+- **Relevant files:** `backend/src/analysis.*`, `backend/src/openai-analysis.model.ts`, `backend/test/analysis.service.test.js`, `frontend/src/App.tsx`, `frontend/src/styles.css`.
+- **How to verify:** Run the mocked analysis tests, then use configured PostgreSQL and OpenAI credentials to analyze `ONB-005` from the React page and inspect every source label and quote.
 
 ### 4. Let PMO assign and save a technical review task
 

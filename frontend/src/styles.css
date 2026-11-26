@@ -60,6 +60,7 @@ summary {
 .case-header,
 .content-section,
 .review-note,
+.analysis-panel,
 .message {
   border: 1px solid #d5e2d9;
   border-radius: 1.25rem;
@@ -148,7 +149,8 @@ h2 {
 }
 
 .content-section,
-.review-note {
+.review-note,
+.analysis-panel {
   margin-top: 1rem;
   padding: clamp(1.4rem, 4vw, 2.2rem);
 }
@@ -242,6 +244,125 @@ h2 {
   border-top: 1px solid #ead9b8;
 }
 
+.analysis-panel__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 2rem;
+}
+
+.analysis-panel__header p {
+  margin-bottom: 0;
+  color: #607167;
+}
+
+.analyze-button {
+  flex: 0 0 auto;
+  padding: 0.75rem 1rem;
+  border: 0;
+  border-radius: 0.7rem;
+  background: #173f2a;
+  color: #ffffff;
+  cursor: pointer;
+  font-weight: 750;
+}
+
+.analyze-button:hover:not(:disabled) {
+  background: #245d3e;
+}
+
+.analyze-button:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+.analysis-error {
+  margin: 1.25rem 0 0;
+  padding: 1rem;
+  border-radius: 0.75rem;
+  background: #fff0ed;
+  color: #8d2d20;
+  line-height: 1.5;
+}
+
+.analysis-results {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #d9e3dc;
+}
+
+.analysis-results h3 {
+  margin: 0 0 0.75rem;
+  font-size: 1rem;
+}
+
+.finding-list {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.finding {
+  padding: 1rem;
+  border: 1px solid #d9e3dc;
+  border-radius: 0.8rem;
+  background: #f8faf8;
+}
+
+.finding p {
+  margin: 0.7rem 0;
+  line-height: 1.55;
+}
+
+.finding blockquote {
+  margin: 0;
+  padding-left: 0.85rem;
+  border-left: 3px solid #7ba58a;
+  color: #4f6257;
+  font-size: 0.9rem;
+  line-height: 1.55;
+}
+
+.source-label {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  border-radius: 999px;
+  background: #dfeee4;
+  color: #245d3e;
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.analysis-summary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.analysis-summary article {
+  padding: 1rem;
+  border-radius: 0.8rem;
+  background: #fffaf0;
+}
+
+.analysis-summary p {
+  line-height: 1.55;
+}
+
+.source-trace {
+  margin-bottom: 0;
+  color: #6f6043;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.analysis-disclaimer {
+  margin: 1rem 0 0;
+  color: #607167;
+  font-size: 0.85rem;
+  line-height: 1.55;
+}
+
 .message {
   display: flex;
   gap: 1rem;
@@ -307,5 +428,18 @@ h2 {
 
   .evidence summary {
     align-items: flex-start;
+  }
+
+  .analysis-panel__header {
+    display: block;
+  }
+
+  .analyze-button {
+    width: 100%;
+    margin-top: 1rem;
+  }
+
+  .analysis-summary {
+    grid-template-columns: 1fr;
   }
 }
