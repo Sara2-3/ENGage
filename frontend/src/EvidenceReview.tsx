@@ -1,9 +1,10 @@
-// Evidence analysis (simulated, quote-checked by the backend) and the technical review task.
+// Evidence analysis (AI model or simulation, quote-checked by the backend) and the technical review task.
 // Available for the demo case the analysis API serves (ONB-005).
 import { useEffect, useState } from 'react';
 import { api } from './api';
 
 interface Analysis {
+  source: string;
   findings: { claim: string; sourceId: string; quote: string }[];
   evidenceGap: { text: string; sourceIds: string[] };
   suggestedNextAction: { text: string; sourceIds: string[] };
@@ -48,7 +49,7 @@ export default function EvidenceReview({ caseId }: { caseId: string }) {
   return (
     <div className="columns">
       <section className="card">
-        <h3>Evidence analysis (simulated)</h3>
+        <h3>Evidence analysis{analysis && `: ${analysis.source}`}</h3>
         <button className="primary" onClick={analyze} disabled={busy}>{busy ? 'Analyzing…' : 'Analyze evidence'}</button>
         {analysis && (
           <>

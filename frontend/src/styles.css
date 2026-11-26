@@ -16,7 +16,6 @@ h3 { font-size: 15px; font-weight: 650; margin-bottom: 12px; }
 .brand { display: flex; align-items: center; gap: 10px; padding: 0 6px; font-size: 19px; font-weight: 700; }
 .brand i { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 9px; background: var(--brand); font-style: normal; font-size: 16px; }
 .brand span { display: block; font-size: 12px; font-weight: 400; color: #bcb7c0; }
-.nav-label { padding: 0 10px; margin: 0; font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: #948e99; }
 .sidebar nav { display: flex; flex-direction: column; gap: 4px; }
 .sidebar nav button { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; background: none; border: 0; border-radius: 9px; color: #dedbe1; padding: 9px 10px; }
 .sidebar nav button:hover { background: rgba(255, 255, 255, .07); }
@@ -132,7 +131,7 @@ ul, ol { padding-left: 20px; font-size: 14px; }
   .sidebar { position: static; height: auto; gap: 10px; }
   .sidebar nav { flex-direction: row; overflow-x: auto; }
   .sidebar nav button { width: auto; white-space: nowrap; }
-  .sidebar nav small, .sidebar footer, .nav-label { display: none; }
+  .sidebar nav small, .sidebar footer { display: none; }
   main { padding: 18px 16px 32px; }
   .search { width: 100%; }
 }
@@ -266,3 +265,11 @@ small.problem { color: #96261b; font-weight: 600; }
 @media (max-width: 480px) { .halves { grid-template-columns: minmax(0, 1fr); } }
 .item-head > h3 + .muted { white-space: nowrap; }
 .item-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 4px; }
+
+
+/* PMO tables */
+.wide .panel td { vertical-align: top; font-size: 13.5px; }
+.wide .panel td small { margin-top: 2px; }
+.wide .panel th, .wide .panel td { padding: 10px 12px; }
+.nowrap { white-space: nowrap; }
+.wide progress { width: 70px; }

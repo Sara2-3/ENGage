@@ -1,129 +1,74 @@
 # ENGage
 
-ENGage is Team ONYX's employee onboarding prototype for the Engineering Albania Student Hackathon. It gives a PMO Coordinator one place to review onboarding evidence, understand what still needs verification, and assign a technical follow-up without changing the reported tracker status or the Technical Lead's responsibility for final readiness.
+Team ONYX's employee onboarding and knowledge-transfer prototype for the Engineering Albania Student Hackathon. It shows what is happening in each onboarding, what is missing or blocked, which evidence supports the status, and who should do what next.
 
-## Default local demo
+## Start
 
-The default demo requires no PostgreSQL instance, `DATABASE_URL`, OpenAI key, or external service. NestJS serves local fixtures through the same API routes used by the full application.
+Needs Node.js. On Windows, double-click `start.cmd` (or run `.\start.ps1`). It installs dependencies the first time, builds the backend, starts both servers and opens <http://localhost:5173>.
 
-The React PMO view includes:
-
-- Eva Stone, Project Orion, case `ONB-005`;
-- reported status **Ready with Support**;
-- Email 3 from the Technical Lead and Email 4 from the Line Manager;
-- deterministic, source-linked **Simulated analysis** with exact quotes;
-- an editable **Assign technical review** workflow; and
-- one in-memory open task assigned to the Technical Lead.
-
-The task remains visible after a browser refresh while the backend process is running. Restarting the backend resets the in-memory task.
-
-## Run the React and NestJS demo on Windows
-
-Prerequisite: Node.js with npm.
-
-From the repository root in Windows PowerShell, install the locked dependencies:
+By hand, in two terminals:
 
 ```powershell
-npm.cmd ci --prefix backend
-npm.cmd ci --prefix frontend
-```
-
-Start the backend with no environment variables required:
-
-```powershell
-npm.cmd run start:dev --prefix backend
-```
-
-In a second PowerShell window, from the repository root, start the frontend:
-
-```powershell
+npm.cmd ci --prefix backend; npm.cmd ci --prefix frontend
+npm.cmd run build --prefix backend; npm.cmd run start --prefix backend
 npm.cmd run dev --prefix frontend
 ```
 
-Open `http://localhost:5173`.
+No database or API key is needed. Everything entered is saved in `backend/runtime/state.json` and survives restarts. To reset the demo, stop the backend and delete that file. `start` runs the built code: rebuild after changing the backend.
 
-## Try the demo
+A practical guide in Albanian: [docs/UDHEZUESI.md](docs/UDHEZUESI.md).
 
-1. Confirm Eva Stone, Project Orion, `ONB-005`, and **Reported status: Ready with Support** are visible.
-2. Expand Email 3 and Email 4 and review the original text.
-3. Click **Analyze evidence**. Confirm the result is labeled **Simulated analysis** and shows findings, exact quotes, the evidence gap, and the suggested technical review.
-4. Review or edit the task description and click **Assign technical review**.
-5. Confirm the task shows **Technical Lead** and **Open**.
-6. Refresh the browser and confirm the task is still visible.
-7. Restart the backend and refresh again to reset the in-memory task.
+## Roles, in order of seniority
 
-The API can also be checked directly from PowerShell:
+| Role | What they do |
+|---|---|
+| PMO | Reads one overview, by project and by employee. Technical Lead work is not shown. |
+| Management | Reads the Additional Manager's reports and sees what is at risk. |
+| Additional Manager | Asks HR for people, assigns projects and teams, reports to Management. |
+| Line Manager | Follows progress, removes practical blockers, reports to the Additional Manager. |
+| Technical Lead | Gives technical tasks, sets the learning plan, validates readiness, reports to the Line Manager. |
+| Employee | Sees profile, CV, projects, tasks and reviews; confirms access works. |
+| HR (support) | Finds or registers the requested person, writes descriptions, uploads CVs. |
 
-```powershell
-$health = Invoke-RestMethod http://localhost:3000/health
-$case = Invoke-RestMethod http://localhost:3000/onboarding/cases/ONB-005
-$analysis = Invoke-RestMethod `
-    -Method Post `
-    http://localhost:3000/onboarding/cases/ONB-005/analyze
+**Practical blocker:** something concrete that stops a person from working (missing access, an unanswered request, an unexplained "Blocked"). It gets an owner and a follow-up date and is followed to closure. A learning gap is not a blocker; it belongs to the Technical Lead.
 
-$taskBody = @{
-    description = "Ask the Technical Lead to review the two scenarios and record what Eva can perform independently."
-} | ConvertTo-Json
+## Demo journey
 
-$firstTask = Invoke-RestMethod `
-    -Method Post `
-    -ContentType "application/json" `
-    -Body $taskBody `
-    http://localhost:3000/onboarding/cases/ONB-005/follow-ups
+1. **Additional Manager** → *Ask HR for people*: New hire, Java, project Atlas.
+2. **HR** → *New hires*: enter a fictional name and start date → *Send to Additional Manager*.
+3. **Additional Manager** → *Waiting for a project* → *Assign project*.
+4. **Technical Lead** → *Assign task*; *Open case* → *Record an update* → *Set the learning plan*.
+5. **Employee** → *My work* → *It works*; *My profile* → *Mark as done*.
+6. **Technical Lead** → *Record activity progress* (Independent), then *Review evidence and decide*; report to the Line Manager.
+7. **Line Manager** → remove a blocker (for example Theo Park), then report to the Additional Manager.
+8. **Additional Manager** → *Report to Management*.
+9. **Management** and **PMO** see the result.
 
-$repeatedTask = Invoke-RestMethod `
-    -Method Post `
-    -ContentType "application/json" `
-    -Body '{"description":"This must not replace the existing task."}' `
-    http://localhost:3000/onboarding/cases/ONB-005/follow-ups
+For a case with conflicting evidence, open Eva Stone (`ONB-005`): the Technical Lead and the Line Manager disagree.
 
-$savedTasks = Invoke-RestMethod `
-    http://localhost:3000/onboarding/cases/ONB-005/follow-ups
+## What is real and what is simulated
 
-$health
-$case
-$analysis
-$firstTask.taskId -eq $repeatedTask.taskId
-$savedTasks
-```
+- Problems, next actions and the close decision come from **fixed rules** (`backend/src/engage/rules`), not from AI.
+- Specification of every component, the decision and the use of AI: [docs/AGENT_SPEC.md](docs/AGENT_SPEC.md).
+- The evidence analysis for Eva Stone is **simulated** unless `OPENAI_API_KEY` and `OPENAI_MODEL` are set; then a real model is called (not yet run against the live API). Follow-up messages are **templates** that a person approves. Nothing is sent.
+- All people and data are fictional. Cases and evidence come from the starter pack; professional directions, descriptions, CVs, tasks and reviews were added by the team.
+- There is **no login**. Roles are chosen on screen and the server trusts the role it is told, so role limits are not security.
+- Do not store passwords or credentials; common patterns are rejected.
 
-The health response should report `status: ok`, `dataSource: mock`, and `mockData: ready`. Both task submissions should return the same task ID and preserve the first description.
-
-## Build and test
-
-From the repository root:
+## Tests
 
 ```powershell
 npm.cmd run build --prefix backend
-npm.cmd run build --prefix frontend
+npm.cmd run test:engage --prefix backend
 npm.cmd run test:analysis --prefix backend
 npm.cmd run test:follow-ups --prefix backend
+npm.cmd run build --prefix frontend
 ```
 
-## Optional PostgreSQL mode
+## Optional PostgreSQL
 
-The PostgreSQL schema and seed scripts remain available for development. To use them, configure `DATABASE_URL`, apply the schema and seed, then start the backend in the same PowerShell session:
+Set `DATABASE_URL` before starting the backend; it creates its tables and seeds missing rows. This mode has not been verified against the latest features.
 
-```powershell
-$env:DATABASE_URL = "postgresql://engage_user:change_me@localhost:5432/engage"
-npm.cmd run db:schema --prefix backend
-npm.cmd run db:seed --prefix backend
-npm.cmd run start:dev --prefix backend
-```
+## Also in the repository
 
-When `DATABASE_URL` is absent, the backend automatically uses mock fixtures and in-memory follow-up storage. The current demo never requires or reads OpenAI credentials.
-
-## Legacy Streamlit prototype
-
-The earlier Streamlit prototype remains runnable:
-
-```powershell
-py -m pip install -r requirements.txt
-py -m streamlit run app.py
-```
-
-## Target stack and deployment
-
-The target product stack remains React with TypeScript, NestJS with TypeScript, PostgreSQL, OpenAI, and Docker. The current local demo uses deterministic analysis instead of a live model and has not been deployed. Docker Compose, live OpenAI integration, and deployment remain future work.
-
-See [Development Log](docs/DEVELOPMENT_LOG.md) for the workflow, architecture, build history, and verification record.
+The earlier Streamlit prototype (`py -m pip install -r requirements.txt`, then `py -m streamlit run app.py`) and the [development log](docs/DEVELOPMENT_LOG.md).

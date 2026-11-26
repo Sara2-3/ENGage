@@ -4,6 +4,7 @@ import { AnalysisService } from "./analysis.service";
 import { EvidenceAnalysis } from "./analysis.schema";
 import { FollowUpService, FollowUpTask } from "./follow-up.service";
 import { OnboardingCase, OnboardingService } from "./onboarding.service";
+import { llmConfigured } from "./openai-analysis.model";
 
 interface CreateFollowUpBody {
   description?: unknown;
@@ -23,8 +24,9 @@ export class OnboardingController {
   }
 
   @Post(":caseId/analyze")
-  analyzeCase(@Param("caseId") caseId: string): Promise<EvidenceAnalysis> {
-    return this.analysisService.analyzeCase(caseId);
+  async analyzeCase(@Param("caseId") caseId: string): Promise<EvidenceAnalysis & { source: string }> {
+    const analysis = await this.analysisService.analyzeCase(caseId);
+    return { ...analysis, source: llmConfigured() ? `AI model ${process.env.OPENAI_MODEL}` : "Simulated, no AI model" };
   }
 
   @Get(":caseId/follow-ups")

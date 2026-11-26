@@ -13,7 +13,7 @@ export default function Blockers({ cases, onSaved }: { cases: Case[]; onSaved: (
   return (
     <section className="card">
       <h3>Practical blockers to remove ({blocked.length})</h3>
-      <p className="muted">1. Give it an owner and a follow-up date. 2. Follow it up. 3. Close it.</p>
+      <p className="muted">Saving an owner and date does not solve it. Mark it fixed only when it really works.</p>
       {blocked.map((c) => {
         const open = c.blockers.filter((b) => !b.resolved);
         const problems = c.assessment.flags.filter((f) => codes.includes(f.code) && f.code !== 'OPEN_BLOCKER');
@@ -42,8 +42,8 @@ export default function Blockers({ cases, onSaved }: { cases: Case[]; onSaved: (
               </Modal>
             )}
             {open.length > 0 && (
-              <Modal title="Resolve">
-                <p>Close the open blockers of <strong>{c.case.employee}</strong>.</p>
+              <Modal title="Mark as fixed">
+                <p>Confirm the blockers are solved for <strong>{c.case.employee}</strong>.</p>
                 <Actions data={{ ...c, asOf: '' }} role="LINE_MANAGER" only="RESOLVE_BLOCKER" onSaved={onSaved} />
               </Modal>
             )}

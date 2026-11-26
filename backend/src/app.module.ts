@@ -9,6 +9,7 @@ import { EngageModule } from "./engage/engage.module";
 import { MockEvidenceAnalysisModel } from "./mock-analysis.model";
 import { OnboardingController } from "./onboarding.controller";
 import { OnboardingService } from "./onboarding.service";
+import { llmConfigured, OpenAiEvidenceAnalysisModel } from "./openai-analysis.model";
 
 @Module({
   imports: [EngageModule],
@@ -19,9 +20,11 @@ import { OnboardingService } from "./onboarding.service";
     FollowUpService,
     OnboardingService,
     MockEvidenceAnalysisModel,
+    OpenAiEvidenceAnalysisModel,
     {
       provide: EVIDENCE_ANALYSIS_MODEL,
-      useExisting: MockEvidenceAnalysisModel,
+      inject: [OpenAiEvidenceAnalysisModel, MockEvidenceAnalysisModel],
+      useFactory: (llm: OpenAiEvidenceAnalysisModel, mock: MockEvidenceAnalysisModel) => (llmConfigured() ? llm : mock),
     },
   ],
 })

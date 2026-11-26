@@ -1,7 +1,7 @@
 // Data access. Uses PostgreSQL when DATABASE_URL is set; otherwise keeps
 // data in memory from the JSON seed files. A configured but unreachable database is an error.
-import { existsSync, readdirSync, readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { existsSync, mkdirSync, readdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
 import { Pool, types } from 'pg';
 import type { Evidence, Facts, OnboardingCase } from '../rules/types';
 import type { CaseEvent, NewEvent } from '../rules/workflow';
@@ -60,7 +60,50 @@ const memory = {
 };
 let pool: Pool | null = null;
 
-export const storage = () => (pool ? 'postgresql' : 'memory');
+export const storage = () => (pool ? 'postgresql' : stateFile ? 'file' : 'memory');
+
+// Without a database, what people enter is written to this file after every change and read back
+// at start-up. The sample data stays in backend/data and is never rewritten.
+let stateFile: string | null = null;
+const uploadedCvs = new Set<string>();
+let followUps: Record<string, unknown> = {};
+
+function save() {
+  if (!stateFile) return;
+  const state = {
+    addedCases: memory.cases.slice(seed.cases.length),
+    events: memory.events,
+    reviews: memory.reviews,
+    staffing: memory.staffing,
+    cvs: Object.fromEntries([...uploadedCvs].map((id) => [id, cvFiles.get(id)!.toString('base64')])),
+    followUps,
+  };
+  mkdirSync(dirname(stateFile), { recursive: true });
+  // Written aside and then renamed, so a crash cannot leave half a file.
+  writeFileSync(`${stateFile}.tmp`, JSON.stringify(state, null, 1));
+  renameSync(`${stateFile}.tmp`, stateFile);
+}
+
+// A damaged file stops the start-up instead of being silently overwritten.
+function restore(file: string) {
+  if (!existsSync(file)) return;
+  const state = JSON.parse(readFileSync(file, 'utf8'));
+  memory.cases = [...seed.cases, ...state.addedCases];
+  memory.events = state.events;
+  memory.reviews = state.reviews;
+  memory.staffing = state.staffing;
+  followUps = state.followUps ?? {};
+  for (const [id, data] of Object.entries(state.cvs as Record<string, string>)) {
+    cvFiles.set(id, Buffer.from(data, 'base64'));
+    uploadedCvs.add(id);
+  }
+}
+
+export const savedFollowUp = <T>(caseId: string) => followUps[caseId] as T | undefined;
+export function keepFollowUp(caseId: string, task: unknown) {
+  followUps[caseId] = task;
+  save();
+}
 
 const SCHEMA = `
   CREATE TABLE IF NOT EXISTS cases (
@@ -122,7 +165,14 @@ const insertCase = (c: OnboardingCase) => pool!.query(
   [c.id, c.employee, c.startDate, c.movement, c.project, c.manager, c.trackerStatus, c.lastUpdate, c.direction ?? null]);
 
 export async function initStorage(env = process.env) {
-  if (!env.DATABASE_URL) return;
+  if (!env.DATABASE_URL) {
+    const file = env.ENGAGE_STATE ?? join(__dirname, '../../../runtime/state.json');
+    if (file !== 'off') {
+      restore(file);
+      stateFile = file;
+    }
+    return;
+  }
   types.setTypeParser(1082, (v: string) => v); // keep dates as YYYY-MM-DD strings
   pool = new Pool({ connectionString: env.DATABASE_URL });
   await pool.query(SCHEMA);
@@ -190,19 +240,24 @@ export async function readCv(caseId: string): Promise<Buffer | undefined> {
 export async function saveCv(caseId: string, data: Buffer) {
   if (!pool) {
     cvFiles.set(caseId, data);
+    uploadedCvs.add(caseId);
+    save();
     return;
   }
   await pool.query('INSERT INTO case_cvs VALUES ($1,$2) ON CONFLICT (case_id) DO UPDATE SET data = $2', [caseId, data]);
 }
 
 export async function addCase(c: OnboardingCase) {
-  if (!pool) memory.cases.push(c);
-  else await insertCase(c);
+  if (!pool) {
+    memory.cases.push(c);
+    save();
+  } else await insertCase(c);
 }
 
 export async function addEvent(caseId: string, e: NewEvent, date: string) {
   if (!pool) {
     memory.events.push({ ...e, id: memory.events.length + 1, caseId, date });
+    save();
     return;
   }
   await pool.query('INSERT INTO events (case_id, type, actor_role, payload, event_date) VALUES ($1,$2,$3,$4,$5)',
@@ -219,6 +274,7 @@ export async function readReviews(caseId: string): Promise<Review[]> {
 export async function addReview(r: Review) {
   if (!pool) {
     memory.reviews.push(r);
+    save();
     return;
   }
   await pool.query('INSERT INTO reviews (case_id, decision, message, created_at) VALUES ($1,$2,$3,$4)',
@@ -234,6 +290,7 @@ export async function readStaffing(): Promise<StaffingRequest[]> {
 export async function addStaffing(project: string, need: string, specs: StaffingSpecs, date: string) {
   if (!pool) {
     memory.staffing.push({ id: memory.staffing.length + 1, project, need, specs, status: 'OPEN', caseId: null, date });
+    save();
     return;
   }
   await pool.query('INSERT INTO staffing_requests (project, need, specs, request_date) VALUES ($1,$2,$3,$4)', [project, need, specs, date]);
@@ -243,6 +300,7 @@ export async function markAssigned(id: number) {
   if (!pool) {
     const request = memory.staffing.find((x) => x.id === id)!;
     request.specs = { ...request.specs, assigned: true };
+    save();
     return;
   }
   await pool.query(`UPDATE staffing_requests SET specs = specs || '{"assigned": true}' WHERE id = $1`, [id]);
@@ -251,6 +309,7 @@ export async function markAssigned(id: number) {
 export async function fillStaffing(id: number, caseId: string) {
   if (!pool) {
     Object.assign(memory.staffing.find((x) => x.id === id)!, { status: 'FILLED', caseId });
+    save();
     return;
   }
   await pool.query(`UPDATE staffing_requests SET status = 'FILLED', case_id = $2 WHERE id = $1`, [id, caseId]);

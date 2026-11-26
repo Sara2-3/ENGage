@@ -8,6 +8,7 @@ import {
 } from "@nestjs/common";
 
 import { DatabaseService } from "./database.service";
+import { keepFollowUp, savedFollowUp } from "./engage/db/repository";
 import { OnboardingService } from "./onboarding.service";
 
 const TECHNICAL_REVIEW = "Technical Review";
@@ -49,7 +50,7 @@ export class FollowUpService {
       await this.onboardingService.getCase(caseId);
 
       if (!this.databaseService.isConfigured()) {
-        const task = this.mockTasksByCase.get(caseId);
+        const task = this.mockTasksByCase.get(caseId) ?? savedFollowUp<FollowUpTask>(caseId);
         return task ? [structuredClone(task)] : [];
       }
 
@@ -77,7 +78,7 @@ export class FollowUpService {
       await this.onboardingService.getCase(caseId);
 
       if (!this.databaseService.isConfigured()) {
-        const existingTask = this.mockTasksByCase.get(caseId);
+        const existingTask = this.mockTasksByCase.get(caseId) ?? savedFollowUp<FollowUpTask>(caseId);
 
         if (existingTask) {
           return structuredClone(existingTask);
@@ -93,6 +94,7 @@ export class FollowUpService {
           createdAt: new Date().toISOString(),
         };
         this.mockTasksByCase.set(caseId, task);
+        keepFollowUp(caseId, task);
         return structuredClone(task);
       }
 

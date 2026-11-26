@@ -72,6 +72,19 @@ export default function CaseView({ id, viewer, onChanged }: { id: string; viewer
         </ol>
       </div>
 
+      <section className="card now">
+        <p className="eyebrow">Decision</p>
+        <h2>{a.decision === 'CAN_CLOSE' ? 'Onboarding can be closed' : a.decision === 'CANNOT_CLOSE' ? 'Do not close this onboarding yet' : 'Not enough information to decide'}</h2>
+        <p><strong>Why:</strong> {a.flags.length
+          ? a.flags.map((f) => f.message).join(' ')
+          : a.decision === 'CAN_CLOSE'
+            ? 'Every checklist item is confirmed and the technical owner validated the work.'
+            : `${a.checklist.filter((x) => x.state !== 'CONFIRMED').length} checklist items are not confirmed.`}</p>
+        <p><strong>Evidence:</strong> {[...new Set(a.flags.flatMap((f) => (f as { evidenceIds?: string[] }).evidenceIds ?? []))].join(', ')
+          || (data.evidence.length ? `${data.evidence.length} records, see Evidence` : `only the tracker status "${c.trackerStatus}"`)}</p>
+        <p><strong>Next:</strong> {a.actions[0] ? `${a.actions[0].ownerRole}: ${a.actions[0].title}` : 'Nothing left to do.'}</p>
+      </section>
+
       {viewer !== 'EMPLOYEE' && (
         <p className="case-links">
           <CvLink c={data} role={viewer} />

@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { api, roles, type StaffingRequest } from './api';
 import CaseView from './CaseView';
-import Flow from './Flow';
 import Employee from './dashboards/Employee';
 import Executive from './dashboards/Executive';
 import Follow from './dashboards/Follow';
@@ -44,7 +43,6 @@ export default function App() {
           <i aria-hidden="true">E</i>
           <div>ENGage<span>Onboarding &amp; KT</span></div>
         </div>
-        <p className="nav-label">By level of importance</p>
         <nav aria-label="Dashboard by role (demo, no login)">
           {roles.map((r, i) => (
             <button key={r.key} aria-pressed={role === r.key} onClick={() => switchRole(r.key)}>
@@ -65,7 +63,6 @@ export default function App() {
           </>
         ) : (
           <>
-            <Flow role={role} onPick={switchRole} />
             {role === 'MANAGEMENT' &&<Executive cases={cases} staffing={staffing} onOpen={setSelected} />}
             {role === 'HR' && <Hr cases={cases} staffing={staffing} onOpen={setSelected} onCreated={created} onSaved={reload} />}
             {role === 'EMPLOYEE' && <Employee cases={cases} who={employee} onPick={setEmployee} onSaved={reload} />}
