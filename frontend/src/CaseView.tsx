@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import Actions from './Actions';
+import EvidenceBrief from './EvidenceBrief';
 import EvidenceReview from './EvidenceReview';
 import CvLink from './CvLink';
 import Modal from './Modal';
@@ -84,6 +85,8 @@ export default function CaseView({ id, viewer, onChanged }: { id: string; viewer
           || (data.evidence.length ? `${data.evidence.length} records, see Evidence` : `only the tracker status "${c.trackerStatus}"`)}</p>
         <p><strong>Next:</strong> {a.actions[0] ? `${a.actions[0].ownerRole}: ${a.actions[0].title}` : 'Nothing left to do.'}</p>
       </section>
+
+      {['PMO', 'ADDITIONAL_MANAGER', 'TECH_LEAD'].includes(viewer) && <EvidenceBrief caseId={id} role={viewer} />}
 
       {viewer !== 'EMPLOYEE' && (
         <p className="case-links">

@@ -1,7 +1,7 @@
 // Additional Manager and Technical Lead: both follow that onboarding is done properly
 // (technically and in every other aspect) and both report to the Line Manager.
 // The list is on the left; the summary of the chosen employee is on the right.
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Actions from '../Actions';
 import EvidenceExtractor from '../EvidenceExtractor';
 import type { StaffingRequest } from '../api';
@@ -35,6 +35,8 @@ export default function Follow({ role, cases, staffing, onOpen, onSaved }: {
   const todo = cases.filter((c) => mine(c).length);
   const others = cases.filter((c) => !mine(c).length);
   const c = cases.find((x) => x.case.id === chosen) ?? todo[0] ?? cases[0];
+  // Pin the first employee once, so a refresh after Accept does not move the summary to someone else.
+  useEffect(() => { if (!chosen && c) setChosen(c.case.id); }, [chosen, c]);
 
   const row = (x: Case) => (
     <button key={x.case.id} type="button" className={`follow-row ${x.assessment.colour}`}
