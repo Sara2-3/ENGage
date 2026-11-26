@@ -161,3 +161,4 @@ button.primary, .back { border-radius: 999px; }
 .item-end { display: flex; align-items: center; gap: 10px; }
 .item dd { margin: 0; font-weight: 600; }
 dl { margin: 0 0 16px; }
+.narrow .page-head { margin-bottom: 16px; }

@@ -1,13 +1,16 @@
-// HR: helps with onboarding, and fills Management's requests for people.
+// HR: did onboarding start correctly, and who can fill Management's requests for people.
+// First view shows only what needs HR; the full list and new cases are folded away.
 import { useState } from 'react';
 import { api, type StaffingRequest } from '../api';
 import NewCase from '../NewCase';
-import { date, has, Metrics, missing, movement, Table, Title, type Case } from '../shared';
+import { date, movement, Person, Title, type Case } from '../shared';
 
-const started = (c: Case) => {
-  if (has(c, 'STATUS_DATE_MISMATCH')) return { text: 'Check: not started?', tone: 'AMBER' };
-  if (has(c, 'MISSING_PROJECT', 'MISSING_MANAGER')) return { text: 'Information missing', tone: 'AMBER' };
-  return c.stages[1].done ? { text: 'Started', tone: 'GREEN' } : { text: 'Not confirmed', tone: 'GREY' };
+const problemCodes = ['STATUS_DATE_MISMATCH', 'MISSING_PROJECT', 'MISSING_MANAGER'];
+
+// Why HR has to look at this case. Empty means onboarding started correctly.
+const problems = (c: Case) => {
+  const found = c.assessment.flags.filter((f) => problemCodes.includes(f.code)).map((f) => f.message);
+  return found.length || c.stages[1].done ? found : ['Start is not confirmed.'];
 };
 
 function Request({ request, cases, onSaved }: { request: StaffingRequest; cases: Case[]; onSaved: () => void }) {
@@ -38,7 +41,7 @@ function Request({ request, cases, onSaved }: { request: StaffingRequest; cases:
         </select>
         <button className="primary" disabled={!caseId} onClick={fill}>Move to {request.project}</button>
       </div>
-      <p className="muted">Skills and availability are not in the data. Confirm them before moving anyone.</p>
+      <small>Skills and availability are not in the data. Confirm them before moving anyone.</small>
       {note && <p role="status">{note}</p>}
     </div>
   );
@@ -48,27 +51,44 @@ export default function Hr({ cases, staffing, onOpen, onCreated, onSaved }: {
   cases: Case[]; staffing: StaffingRequest[]; onOpen: (id: string) => void; onCreated: (id: string) => void; onSaved: () => void;
 }) {
   const open = staffing.filter((s) => s.status === 'OPEN');
+  const toCheck = cases.filter((c) => problems(c).length);
+
   return (
-    <>
-      <Title title="HR" need="Help employees through onboarding and provide people for Management's projects." />
-      <Metrics items={[
-        { title: 'New hires', value: cases.filter((c) => c.case.movement === 'NEW_HIRE').length },
-        { title: 'Reallocations', value: cases.filter((c) => c.case.movement === 'REALLOCATION').length },
-        { title: 'Requests from Management', value: open.length, tone: 'amber' },
-        { title: 'Onboarding to check', value: cases.filter((c) => started(c).tone !== 'GREEN').length, tone: 'amber' },
-      ]} />
+    <div className="narrow">
+      <Title title="HR" need="Check that onboarding started correctly and give projects the people they need." />
+
+      {open.length > 0 && (
+        <section className="card now">
+          <p className="eyebrow">Management is asking for people</p>
+          {open.map((s) => <Request key={s.id} request={s} cases={cases} onSaved={onSaved} />)}
+        </section>
+      )}
+
       <section className="card">
-        <h3>Requests from Management</h3>
-        {open.map((s) => <Request key={s.id} request={s} cases={cases} onSaved={onSaved} />)}
-        {!open.length && <p className="muted">No open requests.</p>}
+        <h3>Needs your check ({toCheck.length})</h3>
+        {toCheck.map((c) => (
+          <div className="item" key={c.case.id}>
+            <div>
+              <Person name={c.case.employee} />
+              {problems(c).map((p) => <small key={p}>{p}</small>)}
+            </div>
+            <button onClick={() => onOpen(c.case.id)}>Open</button>
+          </div>
+        ))}
+        {!toCheck.length && <p className="muted">Everyone started correctly.</p>}
       </section>
-      <Table title="Onboarding start and movement" head={['Movement', 'Start', 'Project', 'Manager', 'Started correctly?']} onOpen={onOpen}
-        cases={[...cases].sort((a, b) => b.case.startDate.localeCompare(a.case.startDate))}
-        cells={(c) => [
-          movement(c), date(c.case.startDate), c.case.project ?? missing, c.case.manager ?? missing,
-          <span className={`pill ${started(c).tone}`}>{started(c).text}</span>,
-        ]} />
+
+      <details className="card">
+        <summary>All employees ({cases.length})</summary>
+        {[...cases].sort((a, b) => b.case.startDate.localeCompare(a.case.startDate)).map((c) => (
+          <div className="item" key={c.case.id}>
+            <Person name={c.case.employee} onOpen={() => onOpen(c.case.id)} />
+            <span className="muted">{movement(c)} · {date(c.case.startDate)} · {c.case.project ?? 'No project'}</span>
+          </div>
+        ))}
+      </details>
+
       <NewCase onCreated={onCreated} />
-    </>
+    </div>
   );
 }
