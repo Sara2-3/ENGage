@@ -114,40 +114,29 @@ function Profile({ c, onSaved }: { c: Case; onSaved: () => void }) {
   );
 }
 
-export default function Hr({ cases, staffing, onOpen, onCreated, onSaved }: {
-  cases: Case[]; staffing: StaffingRequest[]; onOpen: (id: string) => void; onCreated: (id: string) => void; onSaved: () => void;
+export default function Hr({ page, cases, staffing, onOpen, onCreated, onSaved }: {
+  page: string; cases: Case[]; staffing: StaffingRequest[]; onOpen: (id: string) => void; onCreated: (id: string) => void; onSaved: () => void;
 }) {
-  const [tab, setTab] = useState('NEW_HIRE');
   const open = staffing.filter((s) => s.status === 'OPEN');
-  const asking = (key: string) => open.filter((s) => (s.specs?.type ?? 'REALLOCATION') === key);
-  const badge = (key: string) => {
-    const n = asking(key).length;
-    return n > 0 && <span className="pill AMBER">{n} request{n > 1 ? 's' : ''}</span>;
-  };
   const ofType = (key: string) => cases.filter((c) => c.case.movement === key);
   // People HR still has to help come first.
-  const people = ofType(tab).sort((a, b) => problems(b).length - problems(a).length);
+  const people = ofType(page).sort((a, b) => problems(b).length - problems(a).length);
 
   return (
     <div className="narrow">
       <Title title="HR" need="Help new hires start well, and move people to the projects that need them." />
 
+      {page === 'requests' ? (
+        <section className="card now">
+          <p className="eyebrow">Requests from Additional Manager ({open.length})</p>
+          {open.map((s) => <Request key={s.id} request={s} cases={cases} onSaved={onSaved} />)}
+          {!open.length && <p>No requests right now.</p>}
+        </section>
+      ) : (
+      <>
       <NewCase onCreated={onCreated} />
 
-      <div className="tabs" role="group" aria-label="Type of employee">
-        <button aria-pressed={tab === 'NEW_HIRE'} onClick={() => setTab('NEW_HIRE')}>New hires ({ofType('NEW_HIRE').length}){badge('NEW_HIRE')}</button>
-        <button aria-pressed={tab === 'REALLOCATION'} onClick={() => setTab('REALLOCATION')}>
-          Reallocations ({ofType('REALLOCATION').length}){badge('REALLOCATION')}
-        </button>
-      </div>
-
-      <section className="card now">
-        <p className="eyebrow">Requests from Additional Manager</p>
-        {asking(tab).map((s) => <Request key={s.id} request={s} cases={cases} onSaved={onSaved} />)}
-        {!asking(tab).length && <p>No {tab === 'NEW_HIRE' ? 'new-hire' : 'reallocation'} requests right now.</p>}
-      </section>
-
-      <h3>{tab === 'NEW_HIRE' ? 'New hires' : 'Reallocations'}</h3>
+      <h3>{page === 'NEW_HIRE' ? 'New hires' : 'Reallocations'} ({people.length})</h3>
       <div className="people">
         {people.map((c) => (
           <article className="card person-card" key={c.case.id}>
@@ -167,7 +156,8 @@ export default function Hr({ cases, staffing, onOpen, onCreated, onSaved }: {
           </article>
         ))}
       </div>
-
+      </>
+      )}
     </div>
   );
 }

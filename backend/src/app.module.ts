@@ -10,9 +10,10 @@ import { MockEvidenceAnalysisModel } from "./mock-analysis.model";
 import { OnboardingController } from "./onboarding.controller";
 import { OnboardingService } from "./onboarding.service";
 import { llmConfigured, OpenAiEvidenceAnalysisModel } from "./openai-analysis.model";
+import { AuthModule } from "./auth/auth.module";
 
 @Module({
-  imports: [EngageModule],
+  imports: [EngageModule, AuthModule],
   controllers: [HealthController, OnboardingController],
   providers: [
     AnalysisService,

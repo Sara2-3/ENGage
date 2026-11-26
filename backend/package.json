@@ -10,7 +10,9 @@
     "start:dev": "node ./node_modules/@nestjs/cli/bin/nest.js start --watch",
     "test:analysis": "node --test test/analysis.service.test.js",
     "test:follow-ups": "node --test test/follow-up.service.test.js",
-    "test:engage": "node --test test/engage.test.js"
+    "test:engage": "node --test test/engage.test.js",
+    "demo:data": "node scripts/demo-data.js",
+    "db:setup": "node scripts/db-setup.js"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.0",

@@ -25,15 +25,16 @@ const percent = (c: Case) => Math.round((done(c) / c.stages.length) * 100);
 const items = (title: string) => (title.startsWith('Complete: ') ? title.slice(10).split('; ') : [title]);
 const short = (title: string) => (title.startsWith('Complete: ') ? `Complete ${items(title).length} checklist items` : title);
 
-export default function Follow({ role, cases, staffing, onOpen, onSaved }: {
-  role: keyof typeof views; staffing: StaffingRequest[]; cases: Case[]; onOpen: (id: string) => void; onSaved: () => void;
+export default function Follow({ page, role, cases, staffing, onOpen, onSaved }: {
+  page: string; role: keyof typeof views; staffing: StaffingRequest[]; cases: Case[]; onOpen: (id: string) => void; onSaved: () => void;
 }) {
   const view = views[role];
   const [chosen, setChosen] = useState('');
   const mine = (c: Case) => c.assessment.actions.filter((a) => a.ownerRole === view.title).map((a) => a.title);
   const todo = cases.filter((c) => mine(c).length);
   const others = cases.filter((c) => !mine(c).length);
-  const c = cases.find((x) => x.case.id === chosen) ?? todo[0] ?? cases[0];
+  const list = page === 'others' ? others : todo;
+  const c = list.find((x) => x.case.id === chosen) ?? list[0];
 
   const row = (x: Case) => (
     <button key={x.case.id} type="button" className={`follow-row ${x.assessment.colour}`}
@@ -49,7 +50,7 @@ export default function Follow({ role, cases, staffing, onOpen, onSaved }: {
   return (
     <div className="wide">
       <Title title={view.title} need={view.need} />
-      {role === 'ADDITIONAL_MANAGER' && (
+      {page === 'requests' && (
         <div className="add">
           <Modal title="Ask HR for people">
             <AskHr role={role} onSaved={onSaved}
@@ -57,19 +58,27 @@ export default function Follow({ role, cases, staffing, onOpen, onSaved }: {
           </Modal>
         </div>
       )}
-      {role === 'ADDITIONAL_MANAGER' && <Inbox cases={cases} from="LINE_MANAGER" title="Reports from Line Manager" />}
-      {role === 'ADDITIONAL_MANAGER' && <WaitingProject cases={cases} staffing={staffing} onOpen={onOpen} onSaved={onSaved} />}
-      <div className="follow">
+      {page === 'requests' && (
+        <section className="card">
+          <h3>Requests to HR ({staffing.length})</h3>
+          {staffing.map((s) => (
+            <div className="item" key={s.id}>
+              <div className="grow"><strong>{s.need}</strong><small>{s.project}</small></div>
+              <span className={`pill ${s.specs?.assigned ? 'GREEN' : 'AMBER'}`}>{!s.caseId ? 'Waiting for HR' : s.specs?.assigned ? 'Assigned' : 'Found by HR'}</span>
+            </div>
+          ))}
+          {!staffing.length && <p className="muted">No people requested yet.</p>}
+        </section>
+      )}
+      {page === 'reports' && <Inbox cases={cases} from="LINE_MANAGER" title="Reports from Line Manager" />}
+      {page === 'waiting' && <WaitingProject cases={cases} staffing={staffing} onOpen={onOpen} onSaved={onSaved} />}
+      {(page === 'todo' || page === 'others') && <div className="follow">
         <div>
           <section className="card">
-            <h3>Needs your action ({todo.length})</h3>
-            {todo.map(row)}
-            {!todo.length && <p className="muted">Nothing is waiting for you.</p>}
+            <h3>{page === 'others' ? 'Other employees' : 'Needs your action'} ({list.length})</h3>
+            {list.map(row)}
+            {!list.length && <p className="muted">{page === 'others' ? 'No other employees.' : 'Nothing is waiting for you.'}</p>}
           </section>
-          <details className="card">
-            <summary>Other employees ({others.length})</summary>
-            {others.map(row)}
-          </details>
         </div>
 
         {c && (
@@ -137,7 +146,7 @@ export default function Follow({ role, cases, staffing, onOpen, onSaved }: {
             </div>
           </aside>
         )}
-      </div>
+      </div>}
     </div>
   );
 }

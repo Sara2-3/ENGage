@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { api, roles, type StaffingRequest } from './api';
+import { api, type StaffingRequest } from './api';
 import CaseView from './CaseView';
 import Employee from './dashboards/Employee';
 import Executive from './dashboards/Executive';
@@ -7,19 +7,19 @@ import Follow from './dashboards/Follow';
 import Hr from './dashboards/Hr';
 import LineManager from './dashboards/LineManager';
 import Pmo from './dashboards/Pmo';
+import { menus } from './menus';
 import type { Case } from './shared';
+import logo from './auth/eng-logo.svg';
 import { useTheme } from './useTheme';
 
-// The role is kept in the address (#PMO), so a reload or a shared link opens the same dashboard.
-const roleFromHash = () => roles.find((r) => `#${r.key}` === window.location.hash)?.key ?? 'PMO';
-
-export default function App() {
+// Each signed-in user sees only the dashboard of their own role.
+export default function App({ role }: { role: string }) {
   const [cases, setCases] = useState<Case[]>([]);
   const [staffing, setStaffing] = useState<StaffingRequest[]>([]);
-  const [role, setRole] = useState(roleFromHash);
   const [selected, setSelected] = useState<string | null>(null);
   const [employee, setEmployee] = useState('ONB-002');
   const [error, setError] = useState('');
+  const [page, setPage] = useState(menus[role][0].key);
   const { theme, toggle } = useTheme(role === 'PMO' && !selected ? 'pmo' : 'app');
 
   const refresh = useCallback(() => Promise.all([
@@ -29,27 +29,23 @@ export default function App() {
   useEffect(() => {
     refresh().catch(() => setError('Could not reach the API. Start the backend and reload.'));
   }, [refresh]);
-  useEffect(() => {
-    const onHash = () => { setRole(roleFromHash()); setSelected(null); };
-    window.addEventListener('hashchange', onHash);
-    return () => window.removeEventListener('hashchange', onHash);
-  }, []);
   const reload = () => { refresh().catch(() => setError('Could not reload the data.')); };
   const created = (id: string) => { refresh().then(() => setSelected(id)).catch(() => {}); };
-  const switchRole = (key: string) => { window.location.hash = key; setRole(key); setSelected(null); };
+  const go = (key: string) => { setPage(key); setSelected(null); window.scrollTo(0, 0); };
 
   return (
     <div className="app">
       <aside className="sidebar">
         <div className="brand">
-          <i aria-hidden="true">E</i>
+          <img src={logo} alt="eng, Engineering" />
           <div>ENGage<span>Onboarding &amp; KT</span></div>
         </div>
-        <nav aria-label="Dashboard by role (demo, no login)">
-          {roles.map((r, i) => (
-            <button key={r.key} aria-pressed={role === r.key} onClick={() => switchRole(r.key)}>
-              <b aria-hidden="true">{r.key === 'HR' ? '+' : i + 1}</b>
-              <span><strong>{r.title}</strong><small>{r.task}</small></span>
+        <nav aria-label="Menu">
+          {menus[role].map((m, i) => (
+            <button key={m.key} type="button" aria-current={!selected && page === m.key ? 'page' : undefined}
+              aria-pressed={!selected && page === m.key} onClick={() => go(m.key)}>
+              <b aria-hidden="true">{i + 1}</b>
+              <span><strong>{m.title}</strong></span>
             </button>
           ))}
         </nav>
@@ -58,7 +54,6 @@ export default function App() {
           <i aria-hidden="true" />
           <span aria-hidden="true">☾ Dark</span>
         </button>
-        <footer>Prototype · fictional data · no login</footer>
       </aside>
 
       <main>
@@ -70,14 +65,14 @@ export default function App() {
           </>
         ) : (
           <>
-            {role === 'MANAGEMENT' &&<Executive cases={cases} staffing={staffing} onOpen={setSelected} />}
-            {role === 'HR' && <Hr cases={cases} staffing={staffing} onOpen={setSelected} onCreated={created} onSaved={reload} />}
-            {role === 'EMPLOYEE' && <Employee cases={cases} who={employee} onPick={setEmployee} onSaved={reload} />}
+            {role === 'MANAGEMENT' &&<Executive page={page} onPage={go} cases={cases} staffing={staffing} onOpen={setSelected} />}
+            {role === 'HR' && <Hr page={page} cases={cases} staffing={staffing} onOpen={setSelected} onCreated={created} onSaved={reload} />}
+            {role === 'EMPLOYEE' && <Employee page={page} cases={cases} who={employee} onPick={setEmployee} onSaved={reload} />}
             {(role === 'ADDITIONAL_MANAGER' || role === 'TECH_LEAD') && (
-              <Follow key={role} role={role} staffing={staffing} cases={cases} onOpen={setSelected} onSaved={reload} />
+              <Follow key={role} page={page} role={role} staffing={staffing} cases={cases} onOpen={setSelected} onSaved={reload} />
             )}
-            {role === 'LINE_MANAGER' && <LineManager cases={cases} onSaved={reload} />}
-            {role === 'PMO' && <Pmo cases={cases} staffing={staffing} onOpen={setSelected} />}
+            {role === 'LINE_MANAGER' && <LineManager page={page} cases={cases} onSaved={reload} />}
+            {role === 'PMO' && <Pmo page={page} onPage={go} cases={cases} staffing={staffing} onOpen={setSelected} />}
           </>
         )}
       </main>

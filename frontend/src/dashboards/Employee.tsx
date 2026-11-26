@@ -15,11 +15,10 @@ export const accessState: Record<string, { text: string; tone: string }> = {
   UNKNOWN: { text: 'Unknown', tone: 'GREY' },
 };
 
-export default function Employee({ cases, who, onPick, onSaved }: {
-  cases: Case[]; who: string; onPick: (id: string) => void; onSaved: () => void;
+export default function Employee({ page, cases, who, onPick, onSaved }: {
+  page: string; cases: Case[]; who: string; onPick: (id: string) => void; onSaved: () => void;
 }) {
   const [note, setNote] = useState('');
-  const [tab, setTab] = useState('PROFILE');
   const c = cases.find((x) => x.case.id === who) ?? cases[0];
   if (!c) return null;
 
@@ -41,7 +40,7 @@ export default function Employee({ cases, who, onPick, onSaved }: {
     <div className="narrow">
       <Title title={`Hello, ${c.case.employee.split(' ')[0]}`}
         need={`${movement(c)}${c.case.direction ? ` · ${c.case.direction}` : ''} · project ${c.case.project ?? 'not assigned yet'} · started ${date(c.case.startDate)}`} />
-      <label className="role">Signed in as (demo, no login)
+      <label className="role">Viewing as (demo)
         <select value={c.case.id} onChange={(e) => { setNote(''); onPick(e.target.value); }}>
           {[['NEW_HIRE', 'New hires'], ['REALLOCATION', 'Reallocations']].map(([type, label]) => (
             <optgroup key={type} label={label}>
@@ -53,12 +52,9 @@ export default function Employee({ cases, who, onPick, onSaved }: {
         </select>
       </label>
 
-      <div className="tabs" role="group" aria-label="My pages">
-        <button aria-pressed={tab === 'PROFILE'} onClick={() => setTab('PROFILE')}>My profile</button>
-        <button aria-pressed={tab === 'WORK'} onClick={() => setTab('WORK')}>My work</button>
-      </div>
+      {page === 'profile' && <Profile c={c} onSaved={onSaved} />}
 
-      {tab === 'PROFILE' ? <Profile c={c} onSaved={onSaved} /> : (
+      {page === 'work' && (
         <>
           <section className="card now">
             <p className="eyebrow">What you do now</p>
@@ -98,11 +94,14 @@ export default function Employee({ cases, who, onPick, onSaved }: {
             </section>
           )}
 
-          <details className="card">
-            <summary>Send an update</summary>
-            <Actions key={c.case.id} role="EMPLOYEE" data={{ ...c, asOf: '' }} onSaved={onSaved} />
-          </details>
         </>
+      )}
+
+      {page === 'update' && (
+        <section className="card">
+          <h3>Send an update</h3>
+          <Actions key={c.case.id} role="EMPLOYEE" data={{ ...c, asOf: '' }} onSaved={onSaved} />
+        </section>
       )}
     </div>
   );

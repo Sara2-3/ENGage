@@ -12,8 +12,6 @@ export default function WaitingProject({ cases, staffing, onOpen, onSaved }: {
     const request = staffing.find((s) => s.caseId === c.case.id && !s.specs?.assigned);
     return request || !c.case.project ? [{ c, request }] : [];
   });
-  if (!waiting.length) return null;
-
   return (
     <section className="card">
       <h3>Waiting for a project ({waiting.length})</h3>
@@ -28,6 +26,7 @@ export default function WaitingProject({ cases, staffing, onOpen, onSaved }: {
             requestId={request?.id} project={request?.project} role={request?.need} onSaved={onSaved} />
         </div>
       ))}
+      {!waiting.length && <p className="muted">Nobody is waiting for a project.</p>}
     </section>
   );
 }

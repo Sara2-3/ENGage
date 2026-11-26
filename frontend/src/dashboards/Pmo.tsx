@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { words, type StaffingRequest } from '../api';
 import CvLink from '../CvLink';
+import { Attention, Phases, Projects, Requests } from '../OverviewPanels';
 import { latest } from '../Reports';
 import { Table } from '../Table';
 import { completed, date, movement, Person, phase, type Case } from '../shared';
@@ -31,7 +32,9 @@ const targets: Record<string, string> = { 'Open requests to HR': 'requests', Pro
 const names = (values: (string | null | undefined)[]) =>
   [...new Set(values.filter(Boolean))].join(', ') || <span className="muted">Not assigned</span>;
 
-export default function Pmo({ cases, staffing, onOpen }: { cases: Case[]; staffing: StaffingRequest[]; onOpen: (id: string) => void }) {
+export default function Pmo({ page, onPage, cases, staffing, onOpen }: {
+  page: string; onPage: (key: string) => void; cases: Case[]; staffing: StaffingRequest[]; onOpen: (id: string) => void;
+}) {
   const projects = [...new Set([...cases.flatMap((c) => (c.case.project ? [c.case.project] : [])), ...staffing.map((s) => s.project)])].sort();
   const [filter, setFilter] = useState('Employees');
   const shown = cases.filter(filters[filter]);
@@ -42,7 +45,7 @@ export default function Pmo({ cases, staffing, onOpen }: { cases: Case[]; staffi
 
   const pick = (label: string) => {
     if (filters[label]) setFilter(label);
-    document.getElementById(targets[label] ?? 'readiness')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    onPage(targets[label] ?? 'employees');
   };
 
   const kpis = [
@@ -62,6 +65,7 @@ export default function Pmo({ cases, staffing, onOpen }: { cases: Case[]; staffi
 
   return (
     <div className="wide ceo">
+      {page === 'overview' && <>
       <header className="ceo-head">
         <div className="ceo-score" style={{ background: `conic-gradient(var(--brand) ${share(ready)}%, var(--line) 0)` }}>
           <span><strong>{share(ready)}%</strong>ready</span>
@@ -96,7 +100,16 @@ export default function Pmo({ cases, staffing, onOpen }: { cases: Case[]; staffi
         ))}
       </section>
 
-      <Table id="readiness" title={filter === 'Employees' ? 'Employee readiness' : `Employee readiness: ${filter.toLowerCase()} (${shown.length})`} empty="Nobody in this group."
+      <div className="overview">
+        <Attention cases={cases} onOpen={onOpen} onMore={() => { setFilter('Employees'); onPage('employees'); }} />
+        <Projects cases={cases} onMore={() => onPage('projects')} />
+        <Phases cases={cases} />
+        <Requests cases={cases} staffing={staffing} onMore={() => onPage('requests')} />
+      </div>
+      </>}
+
+      {page === 'employees' && filter !== 'Employees' && <button type="button" onClick={() => setFilter('Employees')}>Show all employees</button>}
+      {page === 'employees' && <Table id="readiness" title={filter === 'Employees' ? 'Employee readiness' : `Employee readiness: ${filter.toLowerCase()} (${shown.length})`} empty="Nobody in this group."
         head={['Employee', 'Project', 'Phase', 'Progress', 'Readiness', 'Tracker says', 'Main problem', 'CV']}
         rows={shown.map((c) => {
           const done = c.stages.filter((s) => s.done).length;
@@ -113,9 +126,9 @@ export default function Pmo({ cases, staffing, onOpen }: { cases: Case[]; staffi
               <td><CvLink c={c} role="PMO" /></td>
             </tr>
           );
-        })} />
+        })} />}
 
-      <Table id="projects" title="Projects and teams" empty="No projects."
+      {page === 'projects' && <Table id="projects" title="Projects and teams" empty="No projects."
         head={['Project', 'Employees', 'Manager', 'Additional Manager', 'Technical Lead', 'Line Manager', 'Ready', 'Requests to HR']}
         rows={projects.map((p) => {
           const team = cases.filter((c) => c.case.project === p);
@@ -132,9 +145,9 @@ export default function Pmo({ cases, staffing, onOpen }: { cases: Case[]; staffi
               <td>{asked.length ? `${asked.filter((s) => !s.specs?.assigned).length} open of ${asked.length}` : <span className="muted">None</span>}</td>
             </tr>
           );
-        })} />
+        })} />}
 
-      <Table id="requests" title="Additional Manager → HR: people requested for projects" empty="No people requested yet."
+      {page === 'requests' && <Table id="requests" title="Additional Manager → HR: people requested for projects" empty="No people requested yet."
         head={['Project', 'Role', 'Skills', 'Level', 'Needed from', 'Person', 'Status']}
         rows={staffing.map((s) => (
           <tr key={s.id}>
@@ -146,9 +159,9 @@ export default function Pmo({ cases, staffing, onOpen }: { cases: Case[]; staffi
             <td>{cases.find((c) => c.case.id === s.caseId)?.case.employee ?? <span className="muted">Not found yet</span>}</td>
             <td><span className={`pill ${s.specs?.assigned ? 'GREEN' : 'AMBER'}`}>{!s.caseId ? 'Waiting for HR' : s.specs?.assigned ? 'Assigned' : 'Found by HR'}</span></td>
           </tr>
-        ))} />
+        ))} />}
 
-      <Table id="line-manager" title="Line Manager: blockers, reports and reviews" empty="Nothing from the Line Manager yet."
+      {page === 'line' && <Table id="line-manager" title="Line Manager: blockers, reports and reviews" empty="Nothing from the Line Manager yet."
         head={['Employee', 'Problem', 'Blocker, owner and follow-up', 'Report to Additional Manager', 'Review']}
         rows={lineWork.map((c) => {
           const report = latest(c, 'LINE_MANAGER');
@@ -164,13 +177,13 @@ export default function Pmo({ cases, staffing, onOpen }: { cases: Case[]; staffi
                     {b.description} · {b.owner ?? 'unassigned'} · {b.nextFollowUp ? date(b.nextFollowUp, false) : 'no date'}
                   </small>
                 ))}
-                {!c.blockers.length && <span className="muted">No owner yet</span>}
+                {!c.blockers.length && <span className="muted">No blocker recorded</span>}
               </td>
               <td>{report ? `${words(report.status)}: ${report.note}` : <span className="muted">No report</span>}</td>
               <td>{review ? `${words(review.rating)}: ${review.text}` : <span className="muted">-</span>}</td>
             </tr>
           );
-        })} />
+        })} />}
     </div>
   );
 }

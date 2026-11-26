@@ -352,3 +352,9 @@ main:has(.ceo) { max-width: none; padding: 0; background: #0d0b10; }
 [data-theme='dark'] .summary-head { background: linear-gradient(135deg, var(--ink), #8c1e74 65%, var(--brand)); }
 [data-theme='dark'] main .add > button { background: var(--brand); border-color: var(--brand); color: #fff; }
 .ceo .metrics { grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); }
+.brand img { width: auto; height: 30px; }
+
+/* Overview pages: panels under the numbers, two to a row when there is room */
+.overview { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 380px), 1fr)); gap: 16px; }
+.overview .card { margin: 0; }
+.overview small { display: block; color: var(--muted); }
