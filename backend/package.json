@@ -1,0 +1,26 @@
+{
+  "name": "engage-backend",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "build": "node ./node_modules/@nestjs/cli/bin/nest.js build",
+    "db:schema": "node scripts/run-sql.js db/schema.sql",
+    "db:seed": "node scripts/run-sql.js db/seed.sql",
+    "start": "node dist/main.js",
+    "start:dev": "node ./node_modules/@nestjs/cli/bin/nest.js start --watch"
+  },
+  "dependencies": {
+    "@nestjs/common": "^11.0.0",
+    "@nestjs/core": "^11.0.0",
+    "@nestjs/platform-express": "^11.0.0",
+    "pg": "^8.13.0",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.0"
+  },
+  "devDependencies": {
+    "@nestjs/cli": "^11.0.0",
+    "@types/node": "^24.0.0",
+    "@types/pg": "^8.11.0",
+    "typescript": "^5.7.0"
+  }
+}
