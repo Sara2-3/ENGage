@@ -3,6 +3,7 @@ import Actions from './Actions';
 import EvidenceReview from './EvidenceReview';
 import CvLink from './CvLink';
 import Modal from './Modal';
+import Review from './Review';
 import { api, roles, words, type Detail } from './api';
 
 const decisionText: Record<string, string> = {
@@ -25,6 +26,10 @@ export default function CaseView({ id, viewer, onChanged }: { id: string; viewer
 
   if (!data) return <article className="card">{note || 'Loading…'}</article>;
   const { case: c, assessment: a } = data;
+  const hidden = (role: string) => viewer === 'PMO' && role === 'TECH_LEAD';
+  const evidence = data.evidence.filter((e) => !(e.id.startsWith('APP-') && hidden(e.authorRole)));
+  const reports = data.reports.filter((r) => !hidden(r.role));
+  const feedback = (data.feedback ?? []).filter((r) => !hidden(r.role));
 
   const prepare = async () => {
     try {
@@ -67,7 +72,12 @@ export default function CaseView({ id, viewer, onChanged }: { id: string; viewer
         </ol>
       </div>
 
-      {viewer !== 'EMPLOYEE' && <p><CvLink c={data} role={viewer} /></p>}
+      {viewer !== 'EMPLOYEE' && (
+        <p className="case-links">
+          <CvLink c={data} role={viewer} />
+          <Review c={data} role={viewer} onSaved={() => { api<Detail>(`/cases/${id}`).then(setData).catch(() => {}); onChanged(); }} />
+        </p>
+      )}
 
       <div className="modules">
         <Modal title="What is wrong" summary={a.flags.length ? `${a.flags.length} issue${a.flags.length > 1 ? 's' : ''}` : 'No issue detected'}>
@@ -90,9 +100,9 @@ export default function CaseView({ id, viewer, onChanged }: { id: string; viewer
           {note && <p role="status">{note}</p>}
         </Modal>
 
-        <Modal title="Evidence" summary={data.evidence.length ? `${data.evidence.length} record${data.evidence.length > 1 ? 's' : ''}` : 'None recorded'}>
-          {data.evidence.length === 0 && <p className="muted">No evidence recorded. Only the tracker row is available.</p>}
-          {data.evidence.map((e) => (
+        <Modal title="Evidence" summary={evidence.length ? `${evidence.length} record${evidence.length > 1 ? 's' : ''}` : 'None recorded'}>
+          {evidence.length === 0 && <p className="muted">No evidence recorded. Only the tracker row is available.</p>}
+          {evidence.map((e) => (
             <blockquote key={e.id}>
               {e.text}
               <small>{e.id} · {words(e.authorRole)} · {e.date}</small>
@@ -106,6 +116,7 @@ export default function CaseView({ id, viewer, onChanged }: { id: string; viewer
           </Modal>
         )}
 
+        {viewer !== 'PMO' && (
         <Modal title="Record an update" summary="Add progress, access or a blocker">
           <label className="role">
             Acting as (demo, no login)
@@ -115,6 +126,22 @@ export default function CaseView({ id, viewer, onChanged }: { id: string; viewer
           </label>
           <Actions key={role} data={data} role={role} onSaved={saved} />
         </Modal>
+        )}
+
+        {viewer !== 'EMPLOYEE' && (
+          <Modal title="Reports and reviews" summary={`${reports.length} reports · ${feedback.length} reviews`}>
+            <h3>Reports</h3>
+            {reports.map((r, i) => (
+              <blockquote key={i}>{words(r.status)}: {r.note}<small>{words(r.role)} · {r.date}</small></blockquote>
+            ))}
+            {!reports.length && <p className="muted">No report yet.</p>}
+            <h3>Reviews</h3>
+            {feedback.map((r, i) => (
+              <blockquote key={i}>{words(r.rating)}: {r.text}<small>{words(r.role)} · {r.date}</small></blockquote>
+            ))}
+            {!feedback.length && <p className="muted">No review yet.</p>}
+          </Modal>
+        )}
 
         <Modal title="Details" summary="Readiness, access, blockers and checklist">
           <h3>Readiness by activity</h3>

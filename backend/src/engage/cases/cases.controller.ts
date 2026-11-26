@@ -12,7 +12,7 @@ async function find(id: string) {
 }
 
 // The roles that may open a CV. There is no login in this demo, so the role is what the page says it is.
-const CV_READERS = ['MANAGEMENT', 'HR', 'PMO', 'ADDITIONAL_MANAGER', 'TECH_LEAD', 'LINE_MANAGER'];
+const CV_READERS = ['MANAGEMENT', 'HR', 'PMO', 'ADDITIONAL_MANAGER', 'TECH_LEAD', 'LINE_MANAGER', 'EMPLOYEE'];
 
 @Controller('cases')
 export class CasesController {

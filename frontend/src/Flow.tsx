@@ -1,12 +1,12 @@
-// The onboarding workflow between roles. Additional Manager and Technical Lead work side by side
-// and both report to the Line Manager. PMO sees the whole.
+// The levels in order of seniority; reports travel from right to left. HR supports on the side.
 const steps = [
-  [['MANAGEMENT', 'Management']],
-  [['HR', 'HR']],
-  [['EMPLOYEE', 'Employee']],
-  [['ADDITIONAL_MANAGER', 'Additional Manager'], ['TECH_LEAD', 'Technical Lead']],
-  [['LINE_MANAGER', 'Line Manager']],
   [['PMO', 'PMO']],
+  [['MANAGEMENT', 'Management']],
+  [['ADDITIONAL_MANAGER', 'Additional Manager']],
+  [['LINE_MANAGER', 'Line Manager']],
+  [['TECH_LEAD', 'Technical Lead']],
+  [['EMPLOYEE', 'Employee']],
+  [['HR', 'HR (support)']],
 ];
 
 export default function Flow({ role, onPick }: { role: string; onPick: (key: string) => void }) {

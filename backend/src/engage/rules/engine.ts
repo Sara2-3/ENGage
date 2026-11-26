@@ -123,7 +123,7 @@ function actionsFor(flag: Flag, facts: Facts): NextAction[] {
     case 'READINESS_CONFLICT':
       return [
         a('Cover and assess the two complex scenarios, then set a review date', 'Technical Lead'),
-        a('Report to the Line Manager that the case stays open', 'Additional Manager'),
+        a('Report to Management that the case stays open', 'Additional Manager'),
       ];
     case 'OPEN_BLOCKER': return [a('Remove the blocker and record how it was resolved', 'Additional Manager')];
     case 'BLOCKED_NO_DETAIL': return [a('Record what is blocking, who owns it and the follow-up date', 'Additional Manager')];
@@ -155,7 +155,7 @@ export function assess(c: OnboardingCase, facts: Facts, evidence: Evidence[], as
   const actions: NextAction[] = flags.length
     ? flags.flatMap((f) => actionsFor(f, facts))
     : [{
-      title: decision === 'CAN_CLOSE' ? 'Report completion to the Line Manager' : `Complete: ${missing.join('; ')}`,
+      title: decision === 'CAN_CLOSE' ? 'Report completion to Management' : `Complete: ${missing.join('; ')}`,
       ownerRole: 'Additional Manager',
       flagCode: null,
     }];

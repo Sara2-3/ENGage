@@ -56,6 +56,10 @@ export interface Facts {
   blockers?: { description: string; owner: string | null; nextFollowUp: string | null; resolved: boolean; evidenceId: string }[];
   startConfirmed?: boolean;
   reports?: { role: string; status: string; note: string; date: string }[];
+  tasks?: { id: string; title: string; project: string; due: string | null; done: boolean }[];
+  pastProjects?: string[];
+  // Reviews written for the employee by the levels above.
+  feedback?: { role: string; rating: string; text: string; date: string }[];
   validation?: { outcome: string; date: string; evidenceId: string };
 }
 

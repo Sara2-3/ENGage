@@ -5,7 +5,7 @@ import { api, directionInfo, directions, words, type StaffingRequest } from '../
 import CvLink from '../CvLink';
 import Modal from '../Modal';
 import NewCase from '../NewCase';
-import { date, Person, Title, type Case } from '../shared';
+import { date, Person, requestState, Title, type Case } from '../shared';
 
 const problemCodes = ['STATUS_DATE_MISMATCH', 'MISSING_PROJECT', 'MISSING_MANAGER'];
 
@@ -142,7 +142,7 @@ export default function Hr({ cases, staffing, onOpen, onCreated, onSaved }: {
       </div>
 
       <section className="card now">
-        <p className="eyebrow">Requests from Management</p>
+        <p className="eyebrow">Requests from Additional Manager</p>
         {asking(tab).map((s) => <Request key={s.id} request={s} cases={cases} onSaved={onSaved} />)}
         {!asking(tab).length && <p>No {tab === 'NEW_HIRE' ? 'new-hire' : 'reallocation'} requests right now.</p>}
       </section>
@@ -157,7 +157,7 @@ export default function Hr({ cases, staffing, onOpen, onCreated, onSaved }: {
               ? <span className="issue">{problems(c).join(' ')}</span>
               : <span className="pill GREEN">Started</span>}
             <dl>
-              <dt>Additional Manager requires</dt>
+              <dt>Additional Manager requires {requestState(c) === 'WAITING' && <span className="pill AMBER">New request</span>}</dt>
               <dd>{c.details.requirement ?? <span className="muted">Nothing yet</span>}</dd>
               <dt>Description</dt>
               <dd>{c.details.description ?? <span className="warn">Not written</span>}</dd>

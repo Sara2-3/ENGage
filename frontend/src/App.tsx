@@ -11,7 +11,7 @@ import Pmo from './dashboards/Pmo';
 import type { Case } from './shared';
 
 // The role is kept in the address (#PMO), so a reload or a shared link opens the same dashboard.
-const roleFromHash = () => roles.find((r) => `#${r.key}` === window.location.hash)?.key ?? 'MANAGEMENT';
+const roleFromHash = () => roles.find((r) => `#${r.key}` === window.location.hash)?.key ?? 'PMO';
 
 export default function App() {
   const [cases, setCases] = useState<Case[]>([]);
@@ -44,11 +44,11 @@ export default function App() {
           <i aria-hidden="true">E</i>
           <div>ENGage<span>Onboarding &amp; KT</span></div>
         </div>
-        <p className="nav-label">Workflow by role</p>
+        <p className="nav-label">By level of importance</p>
         <nav aria-label="Dashboard by role (demo, no login)">
           {roles.map((r, i) => (
             <button key={r.key} aria-pressed={role === r.key} onClick={() => switchRole(r.key)}>
-              <b aria-hidden="true">{i + 1}</b>
+              <b aria-hidden="true">{r.key === 'HR' ? '+' : i + 1}</b>
               <span><strong>{r.title}</strong><small>{r.task}</small></span>
             </button>
           ))}
@@ -72,8 +72,8 @@ export default function App() {
             {(role === 'ADDITIONAL_MANAGER' || role === 'TECH_LEAD') && (
               <Follow key={role} role={role} cases={cases} onOpen={setSelected} onSaved={reload} />
             )}
-            {role === 'LINE_MANAGER' && <LineManager cases={cases} />}
-            {role === 'PMO' && <Pmo cases={cases} />}
+            {role === 'LINE_MANAGER' && <LineManager cases={cases} onSaved={reload} />}
+            {role === 'PMO' && <Pmo cases={cases} staffing={staffing} onOpen={setSelected} />}
           </>
         )}
       </main>

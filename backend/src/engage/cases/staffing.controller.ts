@@ -16,7 +16,8 @@ export class StaffingController {
   // `need` is the role Management is looking for; the rest are the specifics HR matches against.
   @Post()
   async create(@Body() body: Record<string, unknown>) {
-    if (body?.actorRole !== 'MANAGEMENT') throw new BadRequestException('Only Management can request people.');
+    const from = body?.actorRole;
+    if (from !== 'ADDITIONAL_MANAGER') throw new BadRequestException('Only the Additional Manager can request people.');
     const project = text(body.project);
     const need = text(body.need);
     const skills = text(body.skills);
@@ -31,7 +32,7 @@ export class StaffingController {
     if (!LEVELS.includes(level)) throw new BadRequestException('Choose a level: Junior, Mid or Senior.');
     if (startDate && !/^\d{4}-\d{2}-\d{2}$/.test(startDate)) throw new BadRequestException('Start date is not valid.');
     if (SECRET.test([need, skills, notes].join(' '))) throw new BadRequestException('Do not store passwords or credentials.');
-    await requestStaff(project, need, { type, direction, skills, level, startDate, notes });
+    await requestStaff(project, need, { from, type, direction, skills, level, startDate, notes });
     return listStaffing();
   }
 

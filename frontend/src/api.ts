@@ -4,6 +4,9 @@ export type Colour = 'RED' | 'AMBER' | 'GREY' | 'GREEN';
 export interface Detail {
   asOf: string;
   hasCv?: boolean;
+  tasks?: { id: string; title: string; project: string; due: string | null; done: boolean }[];
+  projects?: string[];
+  feedback?: { role: string; rating: string; text: string; date: string }[];
   case: { id: string; employee: string; movement: string; project: string | null; startDate: string; manager: string | null; trackerStatus: string; lastUpdate: string; direction?: string | null };
   details: Record<string, string | undefined>;
   evidence: { id: string; date: string; authorRole: string; title: string; text: string }[];
@@ -21,19 +24,20 @@ export interface Detail {
   };
 }
 
+// In order of seniority. HR supports the chain by finding people.
 export const roles = [
-  { key: 'MANAGEMENT', title: 'Management', task: 'Asks for people' },
-  { key: 'HR', title: 'HR', task: 'Assigns and starts' },
-  { key: 'EMPLOYEE', title: 'Employee', task: 'Learns and reports' },
-  { key: 'ADDITIONAL_MANAGER', title: 'Additional Manager', task: 'Follows the process' },
-  { key: 'TECH_LEAD', title: 'Technical Lead', task: 'Validates readiness' },
-  { key: 'LINE_MANAGER', title: 'Line Manager', task: 'General progress' },
-  { key: 'PMO', title: 'PMO', task: 'Whole system' },
+  { key: 'PMO', title: 'PMO', task: 'Sees the whole system' },
+  { key: 'MANAGEMENT', title: 'Management', task: 'Assigns projects' },
+  { key: 'ADDITIONAL_MANAGER', title: 'Additional Manager', task: 'Asks HR, reports up' },
+  { key: 'LINE_MANAGER', title: 'Line Manager', task: 'Follows progress' },
+  { key: 'TECH_LEAD', title: 'Technical Lead', task: 'Gives technical tasks' },
+  { key: 'EMPLOYEE', title: 'Employee', task: 'Does the tasks' },
+  { key: 'HR', title: 'HR', task: 'Support: finds people' },
 ];
 
 export interface StaffingRequest {
   id: number; project: string; need: string;
-  specs?: { assigned?: boolean; type?: string; direction?: string; skills?: string; level?: string; startDate?: string; notes?: string };
+  specs?: { from?: string; assigned?: boolean; type?: string; direction?: string; skills?: string; level?: string; startDate?: string; notes?: string };
   status: 'OPEN' | 'FILLED'; caseId: string | null; date: string;
 }
 

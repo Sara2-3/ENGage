@@ -17,6 +17,7 @@ export interface StaffingSpecs {
   type: 'NEW_HIRE' | 'REALLOCATION';
   direction?: string;
   assigned?: boolean;
+  from?: 'ADDITIONAL_MANAGER';
   skills: string;
   level: string;
   startDate: string;

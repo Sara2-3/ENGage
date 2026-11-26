@@ -43,3 +43,11 @@ export const phase = (c: Case) => {
   const next = c.stages.findIndex((s) => !s.done);
   return next < 0 ? 'Final checks' : phases[next];
 };
+
+// Where the Additional Manager's request to HR stands. Records are in order, so a description
+// written after the last request answers it.
+export const requestState = (c: Case) => {
+  if (!c.details.requirement) return null;
+  const last = (type: string) => c.evidence.map((e) => e.title).lastIndexOf(type);
+  return last('PROFILE') > last('REQUIREMENT') ? 'ANSWERED' : 'WAITING';
+};

@@ -4,7 +4,7 @@ import { DIRECTIONS, type Evidence, type Facts, type Level, type OnboardingCase,
 
 export type EventType =
   | 'ASSIGN' | 'CONFIRM_START' | 'PLAN' | 'ACTIVITY' | 'ACCESS' | 'BLOCKER'
-  | 'RESOLVE_BLOCKER' | 'REQUEST_ANSWERED' | 'VALIDATE' | 'NEXT_STEP' | 'REPORT' | 'CHECKIN' | 'REQUIREMENT' | 'PROFILE';
+  | 'RESOLVE_BLOCKER' | 'REQUEST_ANSWERED' | 'VALIDATE' | 'NEXT_STEP' | 'REPORT' | 'CHECKIN' | 'REQUIREMENT' | 'PROFILE' | 'REVIEW' | 'TASK' | 'TASK_DONE';
 
 export interface NewEvent {
   type: EventType;
@@ -28,10 +28,13 @@ export const ALLOWED: Record<EventType, string[]> = {
   REQUEST_ANSWERED: ['ADDITIONAL_MANAGER', 'TECH_LEAD'],
   VALIDATE: ['TECH_LEAD'],
   NEXT_STEP: ['ADDITIONAL_MANAGER', 'TECH_LEAD'],
-  REPORT: ['ADDITIONAL_MANAGER', 'TECH_LEAD'],
+  REPORT: ['ADDITIONAL_MANAGER', 'LINE_MANAGER', 'TECH_LEAD'],
+  TASK: ['TECH_LEAD'],
+  TASK_DONE: ['EMPLOYEE'],
   CHECKIN: ['EMPLOYEE'],
   REQUIREMENT: ['ADDITIONAL_MANAGER'],
   PROFILE: ['HR'],
+  REVIEW: ['MANAGEMENT', 'HR', 'ADDITIONAL_MANAGER', 'TECH_LEAD', 'LINE_MANAGER'],
 };
 
 export const REPORT_STATUSES = ['ON_TRACK', 'NEEDS_HELP', 'COMPLETED'];
@@ -82,11 +85,18 @@ export function validateEvent(e: NewEvent, facts: Facts): string | null {
     }
     case 'REQUIREMENT':
       return filled(p.text) ? null : 'Write what is required.';
+    case 'REVIEW':
+      return ['VERY_GOOD', 'GOOD', 'NEEDS_IMPROVEMENT'].includes(p.rating) && filled(p.text)
+        ? null : 'Choose a rating and write a comment.';
     case 'PROFILE':
       if (p.direction && !DIRECTIONS.includes(p.direction)) return 'Unknown direction.';
       return filled(p.description) ? null : 'Write a short description.';
     case 'CHECKIN':
       return filled(p.note) ? null : 'Write a short check-in.';
+    case 'TASK':
+      return filled(p.title) ? null : 'Describe the task.';
+    case 'TASK_DONE':
+      return (facts.tasks ?? []).some((t) => t.id === p.taskId && !t.done) ? null : 'This task is not open.';
     case 'REPORT':
       return REPORT_STATUSES.includes(p.status) && filled(p.note) ? null : 'Status and a short note are required.';
     case 'NEXT_STEP':
@@ -116,9 +126,12 @@ const describe = (e: CaseEvent): string => {
     case 'VALIDATE': return p.sufficient
       ? `Validated as ${p.outcome}. ${p.note}` : `Evidence not sufficient yet. ${p.note}`;
     case 'CHECKIN': return `Employee check-in: ${p.note}`;
+    case 'REVIEW': return `Review (${p.rating}): ${p.text}`;
     case 'REQUIREMENT': return `Additional Manager requires: ${p.text}`;
     case 'PROFILE': return `HR description${p.direction ? ` (${p.direction})` : ''}: ${p.description}`;
-    case 'REPORT': return `Report to Line Manager: ${p.status}. ${p.note}`;
+    case 'REPORT': return `Report to the level above: ${p.status}. ${p.note}`;
+    case 'TASK': return `Task assigned: ${p.title}`;
+    case 'TASK_DONE': return 'Employee marked a task as done.';
     case 'NEXT_STEP': return `${p.title} (owner: ${p.owner}${p.due ? `, due ${p.due}` : ''})`;
   }
 };
@@ -140,6 +153,7 @@ export function applyEvents(base: OnboardingCase, seedFacts: Facts, events: Case
       case 'ASSIGN':
         // Moving to another project starts onboarding again: earlier readiness does not carry over.
         if (filled(p.project) && c.project && p.project !== c.project) {
+          (f.pastProjects ??= []).push(c.project);
           c.movement = 'REALLOCATION';
           c.trackerStatus = 'Pre-Onboarding';
           c.startDate = e.date;
@@ -149,6 +163,7 @@ export function applyEvents(base: OnboardingCase, seedFacts: Facts, events: Case
           f.activities = [];
           f.blockers = [];
           f.reports = [];
+          f.feedback = [];
           delete f.readinessClaims;
           delete f.requests;
           delete f.reviewNotScheduled;
@@ -161,6 +176,9 @@ export function applyEvents(base: OnboardingCase, seedFacts: Facts, events: Case
         if (filled(p.project)) c.project = p.project;
         if (filled(p.lineManager)) c.manager = p.lineManager;
         break;
+      case 'REVIEW':
+        (f.feedback ??= []).push({ role: e.actorRole, rating: p.rating, text: p.text, date: e.date });
+        break;
       case 'REQUIREMENT':
         f.details.requirement = p.text;
         break;
@@ -168,6 +186,14 @@ export function applyEvents(base: OnboardingCase, seedFacts: Facts, events: Case
         f.details.description = p.description;
         if (filled(p.direction)) c.direction = p.direction;
         break;
+      case 'TASK':
+        (f.tasks ??= []).push({ id: evidenceId, title: p.title, project: c.project ?? 'No project', due: p.due || null, done: false });
+        break;
+      case 'TASK_DONE': {
+        const task = f.tasks?.find((t) => t.id === p.taskId);
+        if (task) task.done = true;
+        break;
+      }
       case 'REPORT':
         (f.reports ??= []).push({ role: e.actorRole, status: p.status, note: p.note, date: e.date });
         break;
@@ -236,7 +262,7 @@ export function applyEvents(base: OnboardingCase, seedFacts: Facts, events: Case
     }
 
     // Assigning people or planning a follow-up is not new information about progress.
-    if (e.type !== 'NEXT_STEP' && e.type !== 'ASSIGN' && e.type !== 'REPORT' && e.type !== 'REQUIREMENT' && e.type !== 'PROFILE') c.lastUpdate = e.date;
+    if (e.type !== 'NEXT_STEP' && e.type !== 'ASSIGN' && e.type !== 'REPORT' && e.type !== 'REQUIREMENT' && e.type !== 'PROFILE' && e.type !== 'REVIEW' && e.type !== 'TASK' && e.type !== 'TASK_DONE') c.lastUpdate = e.date;
     evidence.push({ id: evidenceId, caseId: e.caseId, date: e.date, authorRole: e.actorRole, title: e.type, text: describe(e) });
   }
   return { case: c, facts: f, evidence };

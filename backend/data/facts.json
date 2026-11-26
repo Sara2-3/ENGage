@@ -8,6 +8,14 @@
     ]
   },
   "ONB-005": {
+    "tasks": [
+      { "id": "S-1", "title": "Cover complex scenario 1", "project": "Orion", "due": null, "done": false },
+      { "id": "S-2", "title": "Cover complex scenario 2", "project": "Orion", "due": null, "done": false }
+    ],
+    "feedback": [
+      { "role": "TECH_LEAD", "rating": "GOOD", "text": "Completed the first training topics and can handle standard requests with occasional support. Two complex scenarios still need to be covered.", "date": "2026-10-13" },
+      { "role": "LINE_MANAGER", "rating": "VERY_GOOD", "text": "From the local side everything looks complete and you are working independently.", "date": "2026-10-13" }
+    ],
     "details": { "description": "New hire in the Java direction, joining project Orion. You learn to handle its requests, from standard ones to complex scenarios." },
     "activities": [
       { "name": "Standard requests", "level": "SUPPORTED", "validatedByTechOwner": true, "evidenceIds": ["EV-3"] },
@@ -35,6 +43,10 @@
     ]
   },
   "ONB-010": {
+    "tasks": [
+      { "id": "S-3", "title": "Practise exceptions with support", "project": "Vega", "due": null, "done": false },
+      { "id": "S-4", "title": "Practise production changes with support", "project": "Vega", "due": null, "done": false }
+    ],
     "details": { "description": "New hire in the Java direction, joining project Vega. You work on daily activities and learn exceptions and production changes." },
     "access": [
       { "system": "All tools (not named)", "state": "USABLE", "note": "Reported available by the employee", "requestedOn": null, "owner": null, "nextFollowUp": null, "evidenceIds": ["EV-6"] }
@@ -56,6 +68,9 @@
     "details": { "description": "You are moving to project Helios. Knowledge transfer has started so you can take over the project work step by step." }
   },
   "ONB-006": {
+    "tasks": [
+      { "id": "S-5", "title": "Read the training guide and runbook in /Team/Operations/Onboarding", "project": "Atlas", "due": null, "done": false }
+    ],
     "details": { "description": "New hire in the SAP direction, joining project Atlas. You start with the project training guide and runbook." }
   },
   "ONB-008": {

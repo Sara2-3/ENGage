@@ -36,11 +36,13 @@ const forms: Form[] = [
     { name: 'sufficient', label: 'Is the evidence enough?', options: ['no', 'yes'] },
     { name: 'outcome', label: 'Readiness (if yes)', options: ['READY_WITH_SUPPORT', 'PARTIALLY_READY', 'READY'] },
     { name: 'note', label: 'What did you observe?' }] },
-  { type: 'REPORT', title: 'Report to the Line Manager', roles: ['ADDITIONAL_MANAGER', 'TECH_LEAD'], fields: [
+  { type: 'REPORT', title: 'Report to the level above', roles: ['ADDITIONAL_MANAGER', 'LINE_MANAGER', 'TECH_LEAD'], fields: [
     { name: 'status', label: 'Status', options: ['ON_TRACK', 'NEEDS_HELP', 'COMPLETED'] },
     { name: 'note', label: 'Short note, without technical detail' }] },
   { type: 'REQUIREMENT', title: 'Requirements for HR', roles: ['ADDITIONAL_MANAGER'], fields: [
     { name: 'text', label: 'What should this person know or be able to do?' }] },
+  { type: 'TASK', title: 'Assign a technical task', roles: ['TECH_LEAD'], fields: [
+    { name: 'title', label: 'Task' }, { name: 'due', label: 'Due (optional)', type: 'date' }] },
   { type: 'CHECKIN', title: 'Send a check-in', roles: ['EMPLOYEE'], fields: [
     { name: 'note', label: 'What can you do alone, and where do you still need help?' }] },
   { type: 'NEXT_STEP', title: 'Set the next step', roles: ['ADDITIONAL_MANAGER', 'TECH_LEAD'], fields: [
