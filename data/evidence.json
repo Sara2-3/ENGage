@@ -1,0 +1,16 @@
+[
+  {
+    "email_id": "Email 3",
+    "case_id": "ONB-005",
+    "author_role": "Technical Lead",
+    "date": "2026-10-13",
+    "original_text": "Eva completed the first training topics and can handle standard requests with occasional support. Two complex scenarios still need to be covered. The Technical Lead classifies her as Ready with Support."
+  },
+  {
+    "email_id": "Email 4",
+    "case_id": "ONB-005",
+    "author_role": "Line Manager",
+    "date": "2026-10-13",
+    "original_text": "From the local side everything looks complete and Eva is working independently. The Line Manager considers onboarding closed."
+  }
+]
