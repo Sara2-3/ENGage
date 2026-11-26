@@ -10,10 +10,13 @@ import Pmo from './dashboards/Pmo';
 import TechLead from './dashboards/TechLead';
 import type { Case } from './shared';
 
+// The role is kept in the address (#PMO), so a reload or a shared link opens the same dashboard.
+const roleFromHash = () => roles.find((r) => `#${r.key}` === window.location.hash)?.key ?? 'MANAGEMENT';
+
 export default function App() {
   const [cases, setCases] = useState<Case[]>([]);
   const [staffing, setStaffing] = useState<StaffingRequest[]>([]);
-  const [role, setRole] = useState('MANAGEMENT');
+  const [role, setRole] = useState(roleFromHash);
   const [selected, setSelected] = useState<string | null>(null);
   const [employee, setEmployee] = useState('ONB-005');
   const [error, setError] = useState('');
@@ -25,23 +28,33 @@ export default function App() {
   useEffect(() => {
     refresh().catch(() => setError('Could not reach the API. Start the backend and reload.'));
   }, [refresh]);
+  useEffect(() => {
+    const onHash = () => { setRole(roleFromHash()); setSelected(null); };
+    window.addEventListener('hashchange', onHash);
+    return () => window.removeEventListener('hashchange', onHash);
+  }, []);
   const reload = () => { refresh().catch(() => setError('Could not reload the data.')); };
   const created = (id: string) => { refresh().then(() => setSelected(id)).catch(() => {}); };
-  const switchRole = (key: string) => { setRole(key); setSelected(null); };
+  const switchRole = (key: string) => { window.location.hash = key; setRole(key); setSelected(null); };
 
   return (
-    <>
-      <header className="topbar">
-        <div>
-          <div className="brand">ENGage<span>Onboarding &amp; Knowledge Transfer</span></div>
-          <div className="asof">Prototype · fictional data · as of 14 Oct 2026</div>
+    <div className="app">
+      <aside className="sidebar">
+        <div className="brand">
+          <i aria-hidden="true">E</i>
+          <div>ENGage<span>Onboarding &amp; KT</span></div>
         </div>
-        <nav className="roles" aria-label="Dashboard by role (demo, no login)">
-          {roles.map((r) => (
-            <button key={r.key} aria-pressed={role === r.key} onClick={() => switchRole(r.key)}>{r.title}</button>
+        <p className="nav-label">Workflow by role</p>
+        <nav aria-label="Dashboard by role (demo, no login)">
+          {roles.map((r, i) => (
+            <button key={r.key} aria-pressed={role === r.key} onClick={() => switchRole(r.key)}>
+              <b aria-hidden="true">{i + 1}</b>
+              <span><strong>{r.title}</strong><small>{r.task}</small></span>
+            </button>
           ))}
         </nav>
-      </header>
+        <footer>Prototype · fictional data · no login</footer>
+      </aside>
 
       <main>
         {error && <p className="card" role="alert">{error}</p>}
@@ -62,6 +75,6 @@ export default function App() {
           </>
         )}
       </main>
-    </>
+    </div>
   );
 }

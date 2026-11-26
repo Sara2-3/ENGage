@@ -44,10 +44,24 @@ export function Metrics({ items }: { items: { title: string; value: number; tone
 
 export function Title({ title, need }: { title: string; need: string }) {
   return (
-    <>
-      <h1 className="page-title">{title}</h1>
-      <p className="muted">{need}</p>
-    </>
+    <header className="page-head">
+      <div>
+        <h1 className="page-title">{title}</h1>
+        <p className="muted">{need}</p>
+      </div>
+      <span className="date-chip">Data as of 14 Oct 2026</span>
+    </header>
+  );
+}
+
+const initials = (name: string) => name.split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase();
+
+export function Person({ name, onOpen }: { name: string; onOpen?: () => void }) {
+  return (
+    <span className="person">
+      <span className="avatar" aria-hidden="true">{initials(name)}</span>
+      {onOpen ? <button className="link" onClick={onOpen}>{name}</button> : name}
+    </span>
   );
 }
 
@@ -63,7 +77,7 @@ export function Table({ title, head, cases, cells, onOpen, empty = 'Nothing to s
           <tbody>
             {cases.map((c) => (
               <tr key={c.case.id} onClick={() => onOpen(c.case.id)}>
-                <td><button className="link" onClick={() => onOpen(c.case.id)}>{c.case.employee}</button></td>
+                <td><Person name={c.case.employee} onOpen={() => onOpen(c.case.id)} /></td>
                 {cells(c).map((cell, i) => <td key={i}>{cell}</td>)}
               </tr>
             ))}
@@ -83,6 +97,7 @@ export function List({ items }: { items: string[] }) {
 
 // Where the onboarding currently stands, without detail.
 const phases = ['Assignment', 'Start', 'Learning plan', 'Activities', 'Technical validation'];
+export const allPhases = [...phases, 'Final checks', 'Completed'];
 export const completed = (c: Case) => c.assessment.decision === 'CAN_CLOSE';
 export const phase = (c: Case) => {
   if (completed(c)) return 'Completed';

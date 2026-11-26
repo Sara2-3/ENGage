@@ -26,13 +26,13 @@ export interface Detail {
 }
 
 export const roles = [
-  { key: 'MANAGEMENT', title: 'Management' },
-  { key: 'HR', title: 'HR' },
-  { key: 'EMPLOYEE', title: 'Employee' },
-  { key: 'ADDITIONAL_MANAGER', title: 'Additional Manager' },
-  { key: 'TECH_LEAD', title: 'Technical Lead' },
-  { key: 'LINE_MANAGER', title: 'Line Manager' },
-  { key: 'PMO', title: 'PMO' },
+  { key: 'MANAGEMENT', title: 'Management', task: 'Asks for people' },
+  { key: 'HR', title: 'HR', task: 'Assigns and starts' },
+  { key: 'EMPLOYEE', title: 'Employee', task: 'Learns and reports' },
+  { key: 'ADDITIONAL_MANAGER', title: 'Additional Manager', task: 'Follows the process' },
+  { key: 'TECH_LEAD', title: 'Technical Lead', task: 'Validates readiness' },
+  { key: 'LINE_MANAGER', title: 'Line Manager', task: 'General progress' },
+  { key: 'PMO', title: 'PMO', task: 'Whole system' },
 ];
 
 export interface StaffingRequest {
