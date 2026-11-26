@@ -49,6 +49,14 @@ export default function EvidenceBrief({ caseId, role }) {
   const cited = new Set(brief?.citedEvidenceIds ?? []);
   const evidence = [...(brief?.evidence ?? [])].sort((a, b) => Number(cited.has(b.id)) - Number(cited.has(a.id)));
   const fromAi = brief?.source.startsWith('AI');
+  const currentDecision = brief && typeof document !== 'undefined'
+    ? document.querySelector('.now h2')?.textContent?.trim()
+    : '';
+  const firstFlag = brief?.gaps?.flags?.[0];
+  const firstUnknown = brief?.gaps?.unknowns?.[0];
+  const mainReason = firstFlag?.message
+    ?? (firstUnknown ? `${firstUnknown.item}: ${words(firstUnknown.state)}` : '');
+  const nextAction = brief?.actions?.[0];
 
   return (
     <section className="card brief" aria-label="Evidence brief">
@@ -66,6 +74,13 @@ export default function EvidenceBrief({ caseId, role }) {
 
       {brief && (
         <>
+          <div className="brief-summary" aria-label="Decision summary">
+            {currentDecision && <p><strong>Current decision</strong><span>{currentDecision}</span></p>}
+            {mainReason && <p><strong>Main reason</strong><span>{mainReason}</span></p>}
+            {nextAction?.ownerRole && <p><strong>Next owner</strong><span>{words(nextAction.ownerRole)}</span></p>}
+            {nextAction?.title && <p><strong>Next action</strong><span>{nextAction.title}</span></p>}
+          </div>
+
           <p>
             <span className={`pill ${fromAi ? 'AMBER' : 'GREY'}`}>{brief.source}</span>{' '}
             <span className="muted">Evidence, gaps and actions come from the rules. The AI only words the text below.</span>
@@ -127,9 +142,11 @@ export default function EvidenceBrief({ caseId, role }) {
               <h3>Drafted follow-up</h3>
               <p className="muted">To: {brief.draft.to} · {brief.draft.subject}</p>
               <textarea rows={9} value={message} onChange={(e) => setMessage(e.target.value)} aria-label="Message draft" />
-              <p className="muted">Sending is simulated. The decision is only recorded.</p>
-              <button className="primary" type="button" onClick={() => decide('approved')}>Approve</button>{' '}
-              <button type="button" onClick={() => decide('rejected')}>Reject</button>
+              <div className="brief-review-actions">
+                <button className="primary" type="button" onClick={() => decide('approved')}>Approve follow-up draft</button>
+                <button type="button" onClick={() => decide('rejected')}>Reject draft</button>
+                <span className="muted">Sending is simulated. This does not close the onboarding case.</span>
+              </div>
             </div>
           )}
           {note && <p role="status">{note}</p>}

@@ -378,12 +378,18 @@ main:has(.ceo) { max-width: none; padding: 0; background: #0d0b10; }
 .overview small { display: block; color: var(--muted); }
 
 /* Evidence brief (PMO, Additional Manager, Technical Lead) */
+.brief { font-size: 15px; }
 .brief-head { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; }
 .brief-head h2 { margin: 0; }
+.brief-summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; margin: 16px 0; padding: 14px; border: 1px solid var(--brand); border-radius: 10px; background: var(--brand-soft); }
+.brief-summary p { margin: 0; }
+.brief-summary strong, .brief-summary span { display: block; }
+.brief-summary strong { margin-bottom: 4px; }
 .brief-cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; margin-top: 14px; }
 .brief-col { padding: 14px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+.brief h3 { font-size: 17px; }
 .brief-col h3 { margin-top: 0; }
-.brief-item { margin: 0 0 12px; padding-bottom: 12px; border-bottom: 1px solid var(--line); }
+.brief-item { margin: 0 0 18px; padding-bottom: 18px; border-bottom: 1px solid var(--line); }
 .brief-item:last-child { margin-bottom: 0; padding-bottom: 0; border-bottom: 0; }
 .brief-quote { margin: 6px 0; font-style: italic; overflow-wrap: anywhere; }
 .brief-source > summary { cursor: pointer; font-weight: 600; color: var(--brand-dark); }
@@ -392,3 +398,6 @@ main:has(.ceo) { max-width: none; padding: 0; background: #0d0b10; }
 .brief-change p { margin: 6px 0 0; }
 .brief-draft { margin-top: 14px; }
 .brief-draft textarea { width: 100%; resize: vertical; }
+.brief button { padding: 10px 18px; }
+.brief-review-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.brief-review-actions .muted { flex: 1 1 280px; }
