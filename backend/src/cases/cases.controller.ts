@@ -1,7 +1,7 @@
 import { Body, Controller, Get, Param, Post, Query, Req } from '@nestjs/common';
 
 import { CasesService } from './cases.service';
-import { CaseEventDto, CreateCaseDto, ReviewDto } from './DTO/case.dto';
+import { BriefDto, CaseEventDto, CreateCaseDto, ExtractDto, ReviewDto } from './DTO/case.dto';
 
 @Controller('cases')
 export class CasesController {
@@ -46,6 +46,16 @@ export class CasesController {
   @Post(':id/advice')
   public async advice(@Param('id') id: string) {
     return this.casesService.advice(id);
+  }
+
+  @Post(':id/brief')
+  public async brief(@Param('id') id: string, @Body() body: BriefDto) {
+    return this.casesService.brief(id, body);
+  }
+
+  @Post(':id/extract')
+  public async extract(@Param('id') id: string, @Body() body: ExtractDto) {
+    return this.casesService.extract(id, body);
   }
 
   @Post(':id/reviews')

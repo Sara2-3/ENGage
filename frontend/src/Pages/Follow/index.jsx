@@ -1,11 +1,12 @@
 // Additional Manager and Technical Lead: both follow that onboarding is done properly
 // (technically and in every other aspect) and both report to the Line Manager.
 // The list is on the left; the summary of the chosen employee is on the right.
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Actions from '../../components/Actions';
 import AskHr from '../../components/AskHr';
 import WaitingProject from '../../components/WaitingProject';
 import CvLink from '../../components/CvLink';
+import EvidenceExtractor from '../../components/EvidenceExtractor';
 import Knowledge from '../../components/Knowledge';
 import Modal from '../../components/Modal';
 import { Inbox, ReportButton } from '../../components/Reports';
@@ -38,6 +39,8 @@ const Follow = ({ page, role, onOpen, onSaved }) => {
   const others = cases.filter((c) => !mine(c).length);
   const list = page === 'others' ? others : todo;
   const c = list.find((x) => x.case.id === chosen) ?? list[0];
+  // Pin the first employee once, so a refresh after Accept does not move the summary to someone else.
+  useEffect(() => { if (!chosen && c) setChosen(c.case.id); }, [chosen, c]);
 
   const row = (x) => (
     <button key={x.case.id} type="button" className={`follow-row ${x.assessment.colour}`}
@@ -126,6 +129,8 @@ const Follow = ({ page, role, onOpen, onSaved }) => {
                   <ul>{c.assessment.flags.map((f) => <li key={f.code}>{f.message}</li>)}</ul>
                 </>
               )}
+
+              <EvidenceExtractor key={c.case.id} caseId={c.case.id} role={role} onSaved={onSaved} />
 
               <div className="summary-actions">
                 <CvLink c={c} role={role} />

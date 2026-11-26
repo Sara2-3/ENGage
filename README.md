@@ -71,6 +71,7 @@ For a case with conflicting evidence, open Eva Stone (`ONB-005`): the Technical 
 - Problems, next actions and the close decision come from **fixed rules** (`backend/src/rules`), not from AI.
 - Specification of every component, the decision and the use of AI: [docs/AGENT_SPEC.md](docs/AGENT_SPEC.md).
 - The evidence analysis for Eva Stone is **simulated** unless `OPENAI_API_KEY` and `OPENAI_MODEL` are set; then a real model is called (not yet run against the live API). Follow-up messages are **templates** that a person approves. Nothing is sent.
+- **Claude (optional):** with `ANTHROPIC_API_KEY` set (in `backend/.env`; `ANTHROPIC_MODEL` defaults to `claude-sonnet-5-5`), the *Evidence brief* on a case words the conflict explanation and the draft message, and *Paste an email* proposes records that a person accepts one by one. Without a key the brief uses a template and nothing is extracted. Not run against the live API in the tests. Longer specification: [docs/SPEC.md](docs/SPEC.md).
 - All people and data are fictional. Cases and evidence come from the starter pack; professional directions, descriptions, CVs, contacts, tasks, reports and reviews were added by the team.
 - Do not store passwords or credentials; common patterns are rejected.
 
@@ -129,6 +130,8 @@ npm.cmd run build --prefix backend
 npm.cmd run test:engage --prefix backend
 npm.cmd run test:analysis --prefix backend
 npm.cmd run test:follow-ups --prefix backend
+npm.cmd run test:advisor --prefix backend
+npm.cmd run test:extractor --prefix backend
 npm.cmd run build --prefix frontend
 ```
 

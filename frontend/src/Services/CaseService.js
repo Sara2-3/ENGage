@@ -16,6 +16,11 @@ export const advice_service = (id) => api(`/cases/${id}/advice`, {});
 
 export const review_draft_service = (id, data) => api(`/cases/${id}/reviews`, data);
 
+// Evidence brief, and records proposed from a pasted message
+export const build_brief_service = (id, data) => api(`/cases/${id}/brief`, data);
+
+export const extract_service = (id, data) => api(`/cases/${id}/extract`, data);
+
 // CV
 export const cvUrl = (caseId, role) => `${API_URL}/cases/${caseId}/cv?role=${role}`;
 

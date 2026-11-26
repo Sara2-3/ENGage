@@ -44,14 +44,14 @@ const ACCESS: AccessState[] = ['NOT_REQUESTED', 'REQUESTED', 'APPROVED', 'USABLE
 const OUTCOMES = ['READY', 'READY_WITH_SUPPORT', 'PARTIALLY_READY'];
 const filled = (v: unknown): v is string => typeof v === 'string' && v.trim().length > 0 && v.length <= 500;
 const list = (v: unknown) => (Array.isArray(v) ? v.filter(filled).map((x) => x.trim()) : []);
-const SECRET = /(password|passwd|fjalëkalim|api[_ -]?key|token)\s*[:=]/i;
+export const CREDENTIAL_PATTERN = /(password|passwd|fjalëkalim|api[_ -]?key|token)\s*[:=]/i;
 
 // Returns an error message, or null when the record is acceptable.
 export function validateEvent(e: NewEvent, facts: Facts): string | null {
   const p = e.payload ?? {};
   if (!ALLOWED[e.type]) return 'Unknown action.';
   if (!ALLOWED[e.type].includes(e.actorRole)) return `This role cannot record ${e.type}.`;
-  if (SECRET.test(JSON.stringify(p))) return 'Do not store passwords or credentials.';
+  if (CREDENTIAL_PATTERN.test(JSON.stringify(p))) return 'Do not store passwords or credentials.';
   switch (e.type) {
     case 'ASSIGN':
       return ['project', 'role', 'lineManager', 'techLead', 'ktOwner'].some((k) => filled(p[k]))

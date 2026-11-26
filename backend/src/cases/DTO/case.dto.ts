@@ -15,6 +15,16 @@ export class CaseEventDto {
   payload?: Record<string, unknown>;
 }
 
+export class BriefDto {
+  actorRole?: string;
+}
+
+export class ExtractDto {
+  actorRole?: string;
+  authorRole?: string;
+  text?: unknown;
+}
+
 export class ReviewDto {
   decision?: string;
   message?: string;

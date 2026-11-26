@@ -6,8 +6,12 @@ import { addCase, addEvent, addReview, readCv, readCvIds, readData, readReviews,
 import { assess, AS_OF } from '../rules/engine';
 import { DIRECTIONS, type OnboardingCase } from '../rules/types';
 import { applyEvents, stages, validateEvent, type NewEvent } from '../rules/workflow';
-import { templateAdvice } from './advisor';
-import type { CaseEventDto, CreateCaseDto, ReviewDto } from './DTO/case.dto';
+import { ActionAdvisor } from './advisor';
+import { EvidenceExtractor } from './evidence-extractor';
+import type { BriefDto, CaseEventDto, CreateCaseDto, ExtractDto, ReviewDto } from './DTO/case.dto';
+
+const BRIEF_READERS = ['PMO', 'ADDITIONAL_MANAGER', 'TECH_LEAD'];
+const EXTRACTOR_ROLES = ['ADDITIONAL_MANAGER', 'TECH_LEAD'];
 
 // The roles that may open a CV. There is no login check on the API, so the role is what the page says it is.
 const CV_READERS = ['MANAGEMENT', 'HR', 'PMO', 'ADDITIONAL_MANAGER', 'TECH_LEAD', 'LINE_MANAGER', 'EMPLOYEE'];
@@ -20,6 +24,11 @@ function evaluate(base: OnboardingCase, data: Data) {
 
 @Injectable()
 export class CasesService {
+  constructor(
+    private readonly actionAdvisor: ActionAdvisor,
+    private readonly evidenceExtractor: EvidenceExtractor,
+  ) {}
+
   public async findOne(id: string) {
     const detail = await this.detail(id);
     if (!detail) throw new NotFoundException(`Case ${id} not found`);
@@ -181,7 +190,61 @@ export class CasesService {
   }
 
   public async advice(id: string) {
-    return templateAdvice(await this.findOne(id));
+    return this.actionAdvisor.advise(await this.findOne(id));
+  }
+
+  // Evidence, gaps and actions come from the rules; the model only words the explanation and the draft.
+  public async brief(id: string, body: BriefDto) {
+    if (!BRIEF_READERS.includes(body?.actorRole ?? '')) {
+      throw new ForbiddenException('This role cannot build an evidence brief.');
+    }
+    const detail = await this.findOne(id);
+    const advice = await this.actionAdvisor.advise(detail);
+    return {
+      evidence: detail.evidence.map((item) => ({
+        id: item.id,
+        authorRole: item.authorRole,
+        quote: item.text,
+        text: item.text,
+      })),
+      gaps: {
+        flags: detail.assessment.flags,
+        unknowns: detail.assessment.checklist.filter((item) => item.state !== 'CONFIRMED'),
+      },
+      actions: detail.assessment.actions,
+      whatWouldChangeTheDecision: advice.whatWouldChangeTheDecision,
+      conflictExplanation: advice.conflictExplanation,
+      draft: advice.draft,
+      citedEvidenceIds: advice.citedEvidenceIds,
+      source: advice.source,
+    };
+  }
+
+  // Proposes records from a pasted message. Nothing is written; a person accepts each proposal.
+  public async extract(id: string, body: ExtractDto) {
+    const actorRole = body?.actorRole ?? '';
+    if (!EXTRACTOR_ROLES.includes(actorRole)) {
+      throw new ForbiddenException('Only the Additional Manager or Technical Lead can extract evidence.');
+    }
+    await this.findOne(id);
+    if (typeof body?.text !== 'string' || !body.text.trim() || body.text.length > 5_000) {
+      throw new BadRequestException('Text must contain 1 to 5000 characters.');
+    }
+    const facts = await this.facts(id);
+    if (!facts) throw new NotFoundException(`Case ${id} not found`);
+    return this.evidenceExtractor.extract({
+      actorRole,
+      authorRole: typeof body.authorRole === 'string' ? body.authorRole : '',
+      text: body.text,
+      facts,
+    });
+  }
+
+  // Case facts for proposal validation. Reading them records nothing.
+  private async facts(id: string) {
+    const data = await readData();
+    const base = data.cases.find((x) => x.id === id);
+    return base ? evaluate(base, data).facts : null;
   }
 
   // Human review. Sending is simulated: the decision is only recorded.
