@@ -90,7 +90,7 @@ function Profile({ c, onSaved }: { c: Case; onSaved: () => void }) {
   };
 
   return (
-    <Modal title="Set description">
+    <Modal title="Edit description">
       <p><strong>{c.case.employee}</strong></p>
       <p className="muted">Additional Manager requires:</p>
       <blockquote>{c.details.requirement ?? 'Nothing recorded yet.'}</blockquote>
@@ -130,6 +130,8 @@ export default function Hr({ cases, staffing, onOpen, onCreated, onSaved }: {
     <div className="narrow">
       <Title title="HR" need="Help new hires start well, and move people to the projects that need them." />
 
+      <NewCase onCreated={onCreated} />
+
       <div className="tabs" role="group" aria-label="Type of employee">
         <button aria-pressed={tab === 'NEW_HIRE'} onClick={() => setTab('NEW_HIRE')}>New hires ({ofType('NEW_HIRE').length}){badge('NEW_HIRE')}</button>
         <button aria-pressed={tab === 'REALLOCATION'} onClick={() => setTab('REALLOCATION')}>
@@ -163,7 +165,6 @@ export default function Hr({ cases, staffing, onOpen, onCreated, onSaved }: {
         ))}
       </div>
 
-      <NewCase onCreated={onCreated} />
     </div>
   );
 }

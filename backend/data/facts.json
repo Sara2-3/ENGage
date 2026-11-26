@@ -1,5 +1,6 @@
 {
   "ONB-002": {
+    "details": { "description": "You are moving to project Nimbus. You need working access to its tools before you take on the project work." },
     "access": [
       { "system": "Nova VPN", "state": "APPROVED", "note": "Active, use not confirmed", "requestedOn": "2026-10-07", "owner": "Access Support", "nextFollowUp": null, "evidenceIds": ["EV-1", "EV-2"] },
       { "system": "Orion Portal", "state": "REQUESTED", "note": "Awaiting application-owner approval", "requestedOn": "2026-10-07", "owner": null, "nextFollowUp": null, "evidenceIds": ["EV-1", "EV-2"] },
@@ -7,6 +8,7 @@
     ]
   },
   "ONB-005": {
+    "details": { "description": "New hire in the Java direction, joining project Orion. You learn to handle its requests, from standard ones to complex scenarios." },
     "activities": [
       { "name": "Standard requests", "level": "SUPPORTED", "validatedByTechOwner": true, "evidenceIds": ["EV-3"] },
       { "name": "Complex scenario 1", "level": "NOT_COVERED", "validatedByTechOwner": false, "evidenceIds": ["EV-3"] },
@@ -18,6 +20,7 @@
     ]
   },
   "ONB-007": {
+    "details": { "description": "You are moving to project Nova. You learn the project activities by shadowing, then with support." },
     "access": [
       { "system": "Project access (not named)", "state": "UNKNOWN", "note": "Expected the week after 20 Sep, never confirmed", "requestedOn": null, "owner": null, "nextFollowUp": null, "evidenceIds": ["EV-7"] }
     ],
@@ -26,11 +29,13 @@
     ]
   },
   "ONB-009": {
+    "details": { "description": "You are moving to a new project. Your project, role and knowledge-transfer owner are still being confirmed." },
     "requests": [
       { "what": "Confirm project role, KT owner and expected readiness date", "to": "TECH_MANAGER", "sentOn": "2026-10-08", "answeredOn": null, "evidenceId": "EV-5" }
     ]
   },
   "ONB-010": {
+    "details": { "description": "New hire in the Java direction, joining project Vega. You work on daily activities and learn exceptions and production changes." },
     "access": [
       { "system": "All tools (not named)", "state": "USABLE", "note": "Reported available by the employee", "requestedOn": null, "owner": null, "nextFollowUp": null, "evidenceIds": ["EV-6"] }
     ],
@@ -40,5 +45,20 @@
       { "name": "Production changes", "level": "SUPPORTED", "validatedByTechOwner": false, "evidenceIds": ["EV-6"] }
     ],
     "reviewNotScheduled": { "evidenceId": "EV-6" }
+  },
+  "ONB-001": {
+    "details": { "description": "New hire in the Angular direction, joining project Aurora. You learn its web interfaces, first by shadowing and then with support." }
+  },
+  "ONB-003": {
+    "details": { "description": "New hire in the .NET direction. You learn how .NET applications are built and supported; your project is still to be confirmed." }
+  },
+  "ONB-004": {
+    "details": { "description": "You are moving to project Helios. Knowledge transfer has started so you can take over the project work step by step." }
+  },
+  "ONB-006": {
+    "details": { "description": "New hire in the SAP direction, joining project Atlas. You start with the project training guide and runbook." }
+  },
+  "ONB-008": {
+    "details": { "description": "New hire in the Microsoft Dynamics direction, joining project Pulse. You learn how the project uses and extends Dynamics." }
   }
 }

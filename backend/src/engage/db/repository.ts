@@ -129,6 +129,13 @@ export async function initStorage(env = process.env) {
   for (const [caseId, f] of Object.entries(seed.facts)) {
     await pool.query('INSERT INTO case_facts VALUES ($1,$2) ON CONFLICT (case_id) DO NOTHING',
       [caseId, JSON.stringify(f)]);
+    // Rows seeded earlier get the description too; one written in the app is kept as a later event.
+    if (f.details?.description) {
+      await pool.query(
+        `UPDATE case_facts SET facts = jsonb_set(facts, '{details}', coalesce(facts->'details', '{}') || jsonb_build_object('description', $2::text))
+         WHERE case_id = $1 AND facts #>> '{details,description}' IS NULL`,
+        [caseId, f.details.description]);
+    }
   }
 }
 

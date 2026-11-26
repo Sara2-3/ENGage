@@ -2,6 +2,7 @@ import { BadRequestException, Body, Controller, Get, NotFoundException, Param, P
 import { templateAdvice } from '../ai/advisor';
 import { addReview } from '../db/repository';
 import { DIRECTIONS } from '../rules/types';
+import { validateEvent } from '../rules/workflow';
 import { getCase, listCases, openCase, overview, record } from './store';
 
 async function find(id: string) {
@@ -18,7 +19,7 @@ export class CasesController {
   }
 
   @Post()
-  async create(@Body() body: { actorRole?: string; employee?: string; movement?: string; startDate?: string; project?: string; direction?: string }) {
+  async create(@Body() body: { actorRole?: string; employee?: string; movement?: string; startDate?: string; project?: string; direction?: string; description?: string }) {
     const { actorRole, employee, movement, startDate, project, direction } = body ?? {};
     if (actorRole !== 'HR') {
       throw new BadRequestException('Only HR can open a case.');
@@ -30,10 +31,13 @@ export class CasesController {
     if (movement === 'NEW_HIRE' && !DIRECTIONS.includes(direction ?? '')) {
       throw new BadRequestException('Choose a professional direction for the new hire.');
     }
+    const description = typeof body.description === 'string' ? body.description.trim() : '';
+    const invalid = description && validateEvent({ type: 'PROFILE', actorRole: 'HR', payload: { description } }, {});
+    if (invalid) throw new BadRequestException(invalid);
     return openCase({
       employee: employee.trim(), movement, startDate: startDate!, project: project?.trim() || null,
       direction: movement === 'NEW_HIRE' ? direction : null,
-    });
+    }, description);
   }
 
   @Post(':id/events')

@@ -83,7 +83,7 @@ export async function record(id: string, event: NewEvent): Promise<string | null
 }
 
 // Opens a new case (workflow steps 1 to 3).
-export async function openCase(input: Pick<OnboardingCase, 'employee' | 'movement' | 'startDate' | 'project' | 'direction'>) {
+export async function openCase(input: Pick<OnboardingCase, 'employee' | 'movement' | 'startDate' | 'project' | 'direction'>, description?: string) {
   const data = await readData();
   const next = Math.max(...data.cases.map((c) => Number(c.id.slice(4)))) + 1;
   const created: OnboardingCase = {
@@ -94,6 +94,12 @@ export async function openCase(input: Pick<OnboardingCase, 'employee' | 'movemen
     lastUpdate: AS_OF,
   };
   await addCase(created);
+  // Every employee starts with a description; HR can change it later.
+  const where = created.project ? `project ${created.project}` : 'a new project';
+  const text = description?.trim() || (created.movement === 'NEW_HIRE'
+    ? `New hire${created.direction ? ` in the ${created.direction} direction` : ''}, joining ${where}.`
+    : `You are moving to ${where}.`);
+  await addEvent(created.id, { type: 'PROFILE', actorRole: 'HR', payload: { description: text } }, AS_OF);
   return created;
 }
 

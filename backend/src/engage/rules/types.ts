@@ -52,7 +52,7 @@ export interface Facts {
   requests?: { what: string; to: string; sentOn: string; answeredOn: string | null; evidenceId: string }[];
   reviewNotScheduled?: { evidenceId: string };
   // Filled by workflow records made in the app.
-  details?: { role?: string; lineManager?: string; techLead?: string; ktOwner?: string; reviewDate?: string; docsLocation?: string };
+  details?: { role?: string; lineManager?: string; techLead?: string; ktOwner?: string; reviewDate?: string; docsLocation?: string; requirement?: string; description?: string };
   blockers?: { description: string; owner: string | null; nextFollowUp: string | null; resolved: boolean; evidenceId: string }[];
   startConfirmed?: boolean;
   reports?: { role: string; status: string; note: string; date: string }[];
