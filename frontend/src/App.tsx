@@ -57,15 +57,15 @@ function StatusMessage({ state }: { state: Exclude<ViewState, "ready"> }) {
   const messages = {
     loading: {
       title: "Loading onboarding case",
-      detail: "Contacting the ENGage API and PostgreSQL database...",
+      detail: "Contacting the ENGage API and local demo data...",
     },
     "not-found": {
       title: "Onboarding case not found",
-      detail: `The API could not find case ${DEMO_CASE_ID}. Run the database seed and try again.`,
+      detail: `The local demo could not find case ${DEMO_CASE_ID}.`,
     },
     unavailable: {
       title: "Onboarding data unavailable",
-      detail: "The API or PostgreSQL database could not be reached. Check the local services and try again.",
+      detail: "The ENGage API could not be reached. Check the backend and try again.",
     },
   } as const;
   const message = messages[state];
@@ -202,7 +202,7 @@ function CaseView({ onboardingCase }: { onboardingCase: OnboardingCase }) {
             {onboardingCase.caseId}
           </p>
         </div>
-        <p className="service-state">API and database connected</p>
+        <p className="service-state">API and mock data ready</p>
       </section>
 
       <section className="reported-status" aria-label="Reported tracker status">
@@ -268,10 +268,10 @@ function CaseView({ onboardingCase }: { onboardingCase: OnboardingCase }) {
       <section className="analysis-panel">
         <div className="analysis-panel__header">
           <div>
-            <p className="eyebrow">AI-assisted review</p>
+            <p className="eyebrow">Simulated analysis</p>
             <h2>Evidence analysis</h2>
             <p>
-              Generate traceable suggestions from the original case evidence.
+              Run a deterministic demo analysis against the original evidence.
             </p>
           </div>
           <button
@@ -289,8 +289,7 @@ function CaseView({ onboardingCase }: { onboardingCase: OnboardingCase }) {
         {analysisState === "error" && (
           <p className="analysis-error" role="alert">
             Evidence analysis is unavailable. The reported status and original
-            emails remain unchanged; check the backend configuration and try
-            again.
+            emails remain unchanged; check the backend and try again.
           </p>
         )}
 
@@ -325,9 +324,9 @@ function CaseView({ onboardingCase }: { onboardingCase: OnboardingCase }) {
             </div>
 
             <p className="analysis-disclaimer">
-              This is an AI-generated suggestion for PMO review. The reported
-              tracker status remains unchanged, and the Technical Lead confirms
-              final technical readiness.
+              This is a simulated suggestion for PMO review. The reported tracker
+              status remains unchanged, and the Technical Lead confirms final
+              technical readiness.
             </p>
           </div>
         )}
@@ -336,6 +335,10 @@ function CaseView({ onboardingCase }: { onboardingCase: OnboardingCase }) {
       <section className="follow-up-panel">
         <p className="eyebrow">PMO follow-up</p>
         <h2>Technical review task</h2>
+        <p className="demo-storage-note">
+          Demo tasks remain available after a browser refresh and reset when the
+          backend restarts.
+        </p>
 
         {followUpLoadState === "loading" && (
           <p className="follow-up-message" aria-live="polite">
@@ -346,7 +349,7 @@ function CaseView({ onboardingCase }: { onboardingCase: OnboardingCase }) {
         {followUpLoadState === "error" && (
           <p className="follow-up-error" role="alert">
             Saved follow-up tasks could not be loaded. Refresh the page after
-            checking the API and database.
+            checking the backend.
           </p>
         )}
 
@@ -409,7 +412,7 @@ function CaseView({ onboardingCase }: { onboardingCase: OnboardingCase }) {
             {followUpSaveState === "error" && (
               <p className="follow-up-error" role="alert">
                 The technical review task could not be saved. Check the API and
-                database, then try again.
+                try again.
               </p>
             )}
             </div>

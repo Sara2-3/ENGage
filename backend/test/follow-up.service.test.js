@@ -16,6 +16,7 @@ const existingTaskRow = {
 test("returns the existing open task without overwriting its description", async () => {
   const calls = [];
   const databaseService = {
+    isConfigured: () => true,
     query: async (text, values) => {
       calls.push({ text, values });
       return calls.length === 1 ? { rows: [] } : { rows: [existingTaskRow] };
@@ -42,6 +43,7 @@ test("returns the existing open task without overwriting its description", async
 test("rejects an empty description before accessing the database", async () => {
   let databaseCalled = false;
   const databaseService = {
+    isConfigured: () => true,
     query: async () => {
       databaseCalled = true;
       return { rows: [] };
@@ -59,4 +61,31 @@ test("rejects an empty description before accessing the database", async () => {
       error.getResponse().status === "invalid_description",
   );
   assert.equal(databaseCalled, false);
+});
+
+test("keeps one open task in memory for repeated demo requests", async () => {
+  const databaseService = {
+    isConfigured: () => false,
+    query: async () => {
+      throw new Error("The mock demo must not query PostgreSQL");
+    },
+  };
+  const onboardingService = {
+    getCase: async () => ({ caseId: "ONB-005", evidence: [] }),
+  };
+  const service = new FollowUpService(databaseService, onboardingService);
+
+  const first = await service.createTechnicalReview(
+    "ONB-005",
+    "Original demo task",
+  );
+  const repeated = await service.createTechnicalReview(
+    "ONB-005",
+    "Replacement text",
+  );
+  const loaded = await service.listForCase("ONB-005");
+
+  assert.equal(repeated.taskId, first.taskId);
+  assert.equal(repeated.description, "Original demo task");
+  assert.deepEqual(loaded, [first]);
 });

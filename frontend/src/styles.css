@@ -369,6 +369,13 @@ h2 {
   color: #607167;
 }
 
+.demo-storage-note {
+  margin-top: -0.35rem;
+  color: #607167;
+  font-size: 0.84rem;
+  line-height: 1.5;
+}
+
 .follow-up-error {
   margin: 1rem 0 0;
   padding: 1rem;

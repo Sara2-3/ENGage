@@ -5,7 +5,7 @@ import { AnalysisService } from "./analysis.service";
 import { FollowUpService } from "./follow-up.service";
 import { HealthController } from "./health.controller";
 import { DatabaseService } from "./database.service";
-import { OpenAiEvidenceAnalysisModel } from "./openai-analysis.model";
+import { MockEvidenceAnalysisModel } from "./mock-analysis.model";
 import { OnboardingController } from "./onboarding.controller";
 import { OnboardingService } from "./onboarding.service";
 
@@ -16,10 +16,10 @@ import { OnboardingService } from "./onboarding.service";
     DatabaseService,
     FollowUpService,
     OnboardingService,
-    OpenAiEvidenceAnalysisModel,
+    MockEvidenceAnalysisModel,
     {
       provide: EVIDENCE_ANALYSIS_MODEL,
-      useExisting: OpenAiEvidenceAnalysisModel,
+      useExisting: MockEvidenceAnalysisModel,
     },
   ],
 })

@@ -13,6 +13,10 @@ export class DatabaseService implements OnApplicationShutdown {
     }
   }
 
+  isConfigured(): boolean {
+    return this.pool !== undefined;
+  }
+
   async checkConnection(): Promise<void> {
     await this.query("SELECT 1");
   }

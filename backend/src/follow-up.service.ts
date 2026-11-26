@@ -37,6 +37,8 @@ export interface FollowUpTask {
 
 @Injectable()
 export class FollowUpService {
+  private readonly mockTasksByCase = new Map<string, FollowUpTask>();
+
   constructor(
     private readonly databaseService: DatabaseService,
     private readonly onboardingService: OnboardingService,
@@ -45,6 +47,12 @@ export class FollowUpService {
   async listForCase(caseId: string): Promise<FollowUpTask[]> {
     try {
       await this.onboardingService.getCase(caseId);
+
+      if (!this.databaseService.isConfigured()) {
+        const task = this.mockTasksByCase.get(caseId);
+        return task ? [structuredClone(task)] : [];
+      }
+
       const result = await this.databaseService.query<FollowUpRow>(
         `SELECT task_id, case_id, task_type, description, assignee_role, status, created_at
          FROM follow_up_tasks
@@ -67,6 +75,27 @@ export class FollowUpService {
 
     try {
       await this.onboardingService.getCase(caseId);
+
+      if (!this.databaseService.isConfigured()) {
+        const existingTask = this.mockTasksByCase.get(caseId);
+
+        if (existingTask) {
+          return structuredClone(existingTask);
+        }
+
+        const task: FollowUpTask = {
+          taskId: randomUUID(),
+          caseId,
+          taskType: TECHNICAL_REVIEW,
+          description,
+          assigneeRole: TECHNICAL_LEAD,
+          status: OPEN,
+          createdAt: new Date().toISOString(),
+        };
+        this.mockTasksByCase.set(caseId, task);
+        return structuredClone(task);
+      }
+
       await this.databaseService.query(
         `INSERT INTO follow_up_tasks (
            task_id, case_id, task_type, description, assignee_role, status

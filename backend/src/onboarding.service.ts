@@ -5,6 +5,7 @@ import {
 } from "@nestjs/common";
 
 import { DatabaseService } from "./database.service";
+import { DEMO_ONBOARDING_CASE } from "./demo-fixtures";
 
 interface CaseRow {
   case_id: string;
@@ -38,6 +39,17 @@ export class OnboardingService {
   constructor(private readonly databaseService: DatabaseService) {}
 
   async getCase(caseId: string): Promise<OnboardingCase> {
+    if (!this.databaseService.isConfigured()) {
+      if (caseId !== DEMO_ONBOARDING_CASE.caseId) {
+        throw new NotFoundException({
+          status: "not_found",
+          message: `Onboarding case ${caseId} was not found.`,
+        });
+      }
+
+      return structuredClone(DEMO_ONBOARDING_CASE);
+    }
+
     try {
       const caseResult = await this.databaseService.query<CaseRow>(
         `SELECT case_id, employee_name, project_name, reported_status
