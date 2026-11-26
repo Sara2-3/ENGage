@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { words } from '../../Helper/format';
 import CvLink from '../../components/CvLink';
+import Knowledge from '../../components/Knowledge';
 import { Attention, Phases, Projects, Requests } from '../../components/OverviewPanels';
 import { latest } from '../../components/Reports';
 import { Table } from '../../components/Table';
@@ -162,6 +163,8 @@ const Pmo = ({ page, onPage, onOpen }) => {
             <td><span className={`pill ${s.specs?.assigned ? 'GREEN' : 'AMBER'}`}>{!s.caseId ? 'Waiting for HR' : s.specs?.assigned ? 'Assigned' : 'Found by HR'}</span></td>
           </tr>
         ))} />}
+
+      {page === 'knowledge' && <Knowledge cases={cases} />}
 
       {page === 'line' && <Table id="line-manager" title="Line Manager: blockers, reports and reviews" empty="Nothing from the Line Manager yet."
         head={['Employee', 'Problem', 'Blocker, owner and follow-up', 'Report to Additional Manager', 'Review']}

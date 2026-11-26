@@ -87,3 +87,10 @@ assessment ──> Message Drafter ──> person approves
 - The sign-in is a demo entry door: it only decides which dashboard is shown. The API does not check it and trusts the role it is given.
 - Project contacts, reports and reviews loaded by `npm run demo:data` are invented by the team, not taken from the starter pack.
 - Fictional data only. Do not send real employee data to a model.
+
+## Next improvements
+
+1. Check the sign-in in the API, so that role limits become real access control.
+2. Run the Evidence Analyst against a real model and extend it beyond the Eva Stone case.
+3. Read new emails and updates into evidence, so conflicts are found without prepared claims.
+4. Accept Ready only when the Technical Lead has observed each activity, whoever recorded its level.

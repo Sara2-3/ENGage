@@ -6,6 +6,7 @@ import Actions from '../../components/Actions';
 import AskHr from '../../components/AskHr';
 import WaitingProject from '../../components/WaitingProject';
 import CvLink from '../../components/CvLink';
+import Knowledge from '../../components/Knowledge';
 import Modal from '../../components/Modal';
 import { Inbox, ReportButton } from '../../components/Reports';
 import Review from '../../components/Review';
@@ -74,6 +75,7 @@ const Follow = ({ page, role, onOpen, onSaved }) => {
       )}
       {page === 'reports' && <Inbox cases={cases} from="LINE_MANAGER" title="Reports from Line Manager" />}
       {page === 'waiting' && <WaitingProject cases={cases} staffing={staffing} onOpen={onOpen} onSaved={onSaved} />}
+      {page === 'knowledge' && <Knowledge cases={cases} />}
       {(page === 'todo' || page === 'others') && <div className="follow">
         <div>
           <section className="card">

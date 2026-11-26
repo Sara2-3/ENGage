@@ -10,6 +10,15 @@ import { add_record_service } from '../../Services/CaseService';
 import { accessState } from '../../db/access';
 import { useCaseContext } from '../../Context/CaseContext';
 
+// Starter pack section 8
+const levels = [
+  ['Shadowing', 'you observe an experienced colleague and ask questions.'],
+  ['Supported', 'you do the work while a colleague guides or reviews it.'],
+  ['Independent', 'you do it without step-by-step support and know when to escalate.'],
+  ['Ready with Support', 'you are operational, with occasional help on exceptions or complex cases.'],
+  ['Partially Ready', 'you are autonomous for only part of the scope and need more practice.'],
+];
+
 const Employee = ({ page, who, onPick, onSaved }) => {
   const { cases } = useCaseContext();
   const [note, setNote] = useState('');
@@ -88,6 +97,13 @@ const Employee = ({ page, who, onPick, onSaved }) => {
             </section>
           )}
 
+          <section className="card">
+            <h3>What the readiness levels mean</h3>
+            {levels.map(([name, meaning]) => (
+              <p key={name}><strong>{name}:</strong> {meaning}</p>
+            ))}
+            <p className="muted">Final readiness needs observed work and the Technical Lead&apos;s validation.</p>
+          </section>
         </>
       )}
 

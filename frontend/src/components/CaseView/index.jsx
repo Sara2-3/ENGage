@@ -4,7 +4,6 @@ import EvidenceReview from './EvidenceReview';
 import CvLink from '../CvLink';
 import Modal from '../Modal';
 import Review from '../Review';
-import { roles } from '../../db/options';
 import { words } from '../../Helper/format';
 import { get_case_service, advice_service, review_draft_service } from '../../Services/CaseService';
 
@@ -14,8 +13,10 @@ const decisionText = {
   CAN_CLOSE: 'Can be closed',
 };
 
+// Roles that have something to record; each records only as itself.
+const canRecord = ['HR', 'ADDITIONAL_MANAGER', 'TECH_LEAD', 'LINE_MANAGER', 'EMPLOYEE'];
+
 const CaseView = ({ id, viewer, onChanged }) => {
-  const [role, setRole] = useState(viewer);
   const [data, setData] = useState(null);
   const [advice, setAdvice] = useState(null);
   const [message, setMessage] = useState('');
@@ -130,15 +131,9 @@ const CaseView = ({ id, viewer, onChanged }) => {
           </Modal>
         )}
 
-        {viewer !== 'PMO' && (
+        {canRecord.includes(viewer) && (
         <Modal title="Record an update" summary="Add progress, access or a blocker">
-          <label className="role">
-            Acting as (demo, no login)
-            <select value={role} onChange={(e) => setRole(e.target.value)}>
-              {roles.map((r) => <option key={r.key} value={r.key}>{r.title}</option>)}
-            </select>
-          </label>
-          <Actions key={role} data={data} role={role} onSaved={saved} />
+          <Actions data={data} role={viewer} onSaved={saved} />
         </Modal>
         )}
 
