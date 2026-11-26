@@ -4,8 +4,9 @@ import {
   ServiceUnavailableException,
 } from "@nestjs/common";
 
-import { DatabaseService } from "./database.service";
+import { DatabaseService } from "../database/database.service";
 import { DEMO_ONBOARDING_CASE } from "./demo-fixtures";
+import type { OnboardingCase } from "./Entity/onboarding-case";
 
 interface CaseRow {
   case_id: string;
@@ -19,19 +20,6 @@ interface EvidenceRow {
   author_role: string;
   source_date: string;
   original_text: string;
-}
-
-export interface OnboardingCase {
-  caseId: string;
-  employeeName: string;
-  projectName: string;
-  reportedStatus: string;
-  evidence: Array<{
-    sourceId: string;
-    authorRole: string;
-    date: string;
-    originalText: string;
-  }>;
 }
 
 @Injectable()

@@ -1,7 +1,7 @@
 const assert = require("node:assert/strict");
 const test = require("node:test");
 
-const { FollowUpService } = require("../dist/follow-up.service.js");
+const { FollowUpService } = require("../dist/onboarding/follow-up.service.js");
 
 const existingTaskRow = {
   task_id: "task-existing",

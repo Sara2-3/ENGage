@@ -4,19 +4,25 @@
 
 Dy klikime mbi `start.cmd`. Hapet `http://localhost:5173`. Për ta ndalur, mbyll dy dritaret që hapen.
 
+## Si hyn
+
+- User-at: `pmo`, `management`, `additional`, `linemanager`, `techlead`, `employee`, `hr`. Të gjithë kanë të njëjtin fjalëkalim.
+- Fjalëkalimi nuk është në kod: gjendet te `backend/runtime/password.txt`, ose vendoset me `ENGAGE_PASSWORD`. Butonat e roleve te faqja e hyrjes e plotësojnë formën.
+- Secili sheh vetëm dashboard-in e rolit të vet, me menu anash. Për të ndërruar rol: **Sign out**.
+
 ## Rrjedha (shembull: një new hire për projektin Atlas)
 
 | Nr. | Kush | Çfarë bën | Ku |
 |---|---|---|---|
-| 1 | Additional Manager | kërkon një person | Ask HR for people |
-| 2 | HR | e gjen dhe e dërgon | New hires → Send to Additional Manager |
-| 3 | Additional Manager | cakton projektin dhe ekipin | Waiting for a project → Assign project |
-| 4 | Technical Lead | jep detyra dhe plan mësimi | Assign task; Open case → Record an update → Set the learning plan |
-| 5 | Employee | konfirmon aksesin, kryen detyrat | My work → It works; My profile → Mark as done |
-| 6 | Technical Lead | konfirmon gatishmërinë, raporton | Record activity progress; Review evidence and decide; Report to Line Manager |
-| 7 | Line Manager | heq pengesat, raporton | Assign owner and date; Mark as fixed; Report to Additional Manager |
-| 8 | Additional Manager | raporton | Report to Management |
-| 9 | Management dhe PMO | shohin rezultatin | Dashboard |
+| 1 | Additional Manager | kërkon një person | Ask HR → Ask HR for people |
+| 2 | HR | e gjen dhe e dërgon | Requests → Send to Additional Manager |
+| 3 | Additional Manager | cakton projektin dhe ekipin | Assign projects → Assign project |
+| 4 | Technical Lead | jep detyra dhe plan mësimi | zgjedh personin → Assign task; Open case → Record an update → Set the learning plan |
+| 5 | Employee | konfirmon aksesin, kryen detyrat | zgjedh personin; My work → It works; My profile → Mark as done |
+| 6 | Technical Lead | konfirmon gatishmërinë, raporton | Open case → Record an update → Record activity progress; Review evidence and decide; Report to Line Manager |
+| 7 | Line Manager | heq pengesat, raporton | Blockers → Assign owner and date, Mark as fixed; Progress → Report to Additional Manager |
+| 8 | Additional Manager | raporton | Needs my action → Report to Management |
+| 9 | Management dhe PMO | shohin rezultatin | Overview |
 
 ## Rolet
 
@@ -40,13 +46,13 @@ Diçka konkrete që e ndalon punonjësin: akses që mungon, kërkesë pa përgji
 
 ## Ku ruhen të dhënat
 
-- Gjithçka që futet (kërkesa, caktime, detyra, raporte, vlerësime, pengesa, CV të ngarkuara) ruhet në `backend/runtime/state.json` dhe **mbetet edhe pas rindezjes**.
-- Asgjë nuk fshihet dhe nuk mbishkruhet: çdo regjistrim mbetet dhe shihet te Evidence në faqen e rastit.
-- Skedari nuk shkon në Git.
-- **Për të filluar demon nga e para:** ndalo backend-in, fshi `backend/runtime/state.json`, nise sërish.
+- Çdo regjistrim mbetet dhe nuk mbishkruhet; shihet te Evidence në faqen e rastit.
+- **Pa databazë:** ruhen në `backend/runtime/state.json` (nuk shkon në Git) dhe mbeten edhe pas rindezjes. Për ta filluar demon nga e para: ndalo backend-in, fshi skedarin, nise sërish.
+- **Me PostgreSQL:** krijo `backend/.env` me `DATABASE_URL`, pastaj `npm run build`, `npm run db:setup` dhe `npm run start` nga folderi `backend`. Hapat e plotë janë te [README](../README.md).
+- **Të dhëna për demo:** me backend-in të ndezur, `npm run demo:data` nga folderi `backend`.
 
 ## Kufizime që duhen thënë hapur
 
-- Nuk ka login: roli zgjidhet në ekran, prandaj kufizimet sipas rolit nuk janë siguri.
+- Hyrja është vetëm për demo: vendos cili dashboard shfaqet, por API-ja nuk e kontrollon, prandaj kufizimet sipas rolit nuk janë siguri.
 - Problemet dhe hapat e radhës dalin nga rregulla fikse, jo nga AI. Analiza te Eva Stone është e simuluar; mesazhet janë shabllone dhe nuk dërgohen.
-- Të gjitha të dhënat janë fiktive.
+- Të gjitha të dhënat janë fiktive. Kontaktet e projekteve, raportet dhe vlerësimet e demos i ka shtuar ekipi.

@@ -5,44 +5,10 @@ import { dirname, join } from 'node:path';
 import { Pool, types } from 'pg';
 import type { Evidence, Facts, OnboardingCase } from '../rules/types';
 import type { CaseEvent, NewEvent } from '../rules/workflow';
-
-export interface Review {
-  caseId: string;
-  decision: 'approved' | 'rejected';
-  message: string;
-  at: string;
-}
-
-export interface StaffingSpecs {
-  type: 'NEW_HIRE' | 'REALLOCATION';
-  direction?: string;
-  assigned?: boolean;
-  from?: 'ADDITIONAL_MANAGER';
-  skills: string;
-  level: string;
-  startDate: string;
-  notes: string;
-}
-
-export interface StaffingRequest {
-  id: number;
-  project: string;
-  need: string;
-  specs: StaffingSpecs;
-  status: 'OPEN' | 'FILLED';
-  caseId: string | null;
-  date: string;
-}
-
-export interface Data {
-  cases: OnboardingCase[];
-  evidence: Evidence[];
-  facts: Record<string, Facts>;
-  events: CaseEvent[];
-}
+import type { Data, Review, StaffingRequest, StaffingSpecs } from './Entity/storage.entities';
 
 const load = <T>(name: string): T =>
-  JSON.parse(readFileSync(join(__dirname, '../../../data', name), 'utf8')) as T;
+  JSON.parse(readFileSync(join(__dirname, '../../data', name), 'utf8')) as T;
 
 const seed = {
   cases: load<OnboardingCase[]>('cases.json'),
@@ -51,7 +17,7 @@ const seed = {
 };
 
 // CVs of the sample employees; uploads are added to the same map (or table).
-const cvDir = join(__dirname, '../../../data/cvs');
+const cvDir = join(__dirname, '../../data/cvs');
 const cvFiles = new Map<string, Buffer>(
   existsSync(cvDir) ? readdirSync(cvDir).filter((f) => f.endsWith('.pdf')).map((f) => [f.slice(0, -4), readFileSync(join(cvDir, f))]) : []);
 
@@ -166,7 +132,7 @@ const insertCase = (c: OnboardingCase) => pool!.query(
 
 export async function initStorage(env = process.env) {
   if (!env.DATABASE_URL) {
-    const file = env.ENGAGE_STATE ?? join(__dirname, '../../../runtime/state.json');
+    const file = env.ENGAGE_STATE ?? join(__dirname, '../../runtime/state.json');
     if (file !== 'off') {
       restore(file);
       stateFile = file;

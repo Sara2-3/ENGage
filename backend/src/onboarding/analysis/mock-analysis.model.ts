@@ -2,7 +2,7 @@ import { Injectable } from "@nestjs/common";
 
 import { EvidenceAnalysisModel } from "./analysis.model";
 import { EvidenceAnalysis } from "./analysis.schema";
-import { OnboardingCase } from "./onboarding.service";
+import { OnboardingCase } from "../Entity/onboarding-case";
 
 @Injectable()
 export class MockEvidenceAnalysisModel implements EvidenceAnalysisModel {

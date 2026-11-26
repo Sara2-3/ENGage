@@ -1,7 +1,7 @@
 const assert = require("node:assert/strict");
 const test = require("node:test");
 
-const { AnalysisService } = require("../dist/analysis.service.js");
+const { AnalysisService } = require("../dist/onboarding/analysis/analysis.service.js");
 
 const onboardingCase = {
   caseId: "ONB-005",

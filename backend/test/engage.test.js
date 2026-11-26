@@ -1,8 +1,8 @@
 // Rules and workflow of the role dashboards. Run after the build: npm run test:engage
 const { test } = require("node:test");
 const assert = require("node:assert/strict");
-const { assess } = require("../dist/engage/rules/engine");
-const { applyEvents, validateEvent } = require("../dist/engage/rules/workflow");
+const { assess } = require("../dist/rules/engine");
+const { applyEvents, validateEvent } = require("../dist/rules/workflow");
 const cases = require("../data/cases.json");
 const evidence = require("../data/evidence.json");
 const facts = require("../data/facts.json");

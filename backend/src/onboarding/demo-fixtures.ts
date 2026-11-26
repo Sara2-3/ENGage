@@ -1,4 +1,4 @@
-import type { OnboardingCase } from "./onboarding.service";
+import type { OnboardingCase } from "./Entity/onboarding-case";
 
 export const DEMO_ONBOARDING_CASE: OnboardingCase = {
   caseId: "ONB-005",

@@ -1,14 +1,13 @@
 import { Body, Controller, Get, Param, Post } from "@nestjs/common";
 
-import { AnalysisService } from "./analysis.service";
-import { EvidenceAnalysis } from "./analysis.schema";
-import { FollowUpService, FollowUpTask } from "./follow-up.service";
-import { OnboardingCase, OnboardingService } from "./onboarding.service";
-import { llmConfigured } from "./openai-analysis.model";
-
-interface CreateFollowUpBody {
-  description?: unknown;
-}
+import { AnalysisService } from "./analysis/analysis.service";
+import { EvidenceAnalysis } from "./analysis/analysis.schema";
+import { CreateFollowUpDto } from "./DTO/follow-up.dto";
+import type { FollowUpTask } from "./Entity/follow-up-task";
+import type { OnboardingCase } from "./Entity/onboarding-case";
+import { FollowUpService } from "./follow-up.service";
+import { OnboardingService } from "./onboarding.service";
+import { llmConfigured } from "./analysis/openai-analysis.model";
 
 @Controller("onboarding/cases")
 export class OnboardingController {
@@ -19,25 +18,25 @@ export class OnboardingController {
   ) {}
 
   @Get(":caseId")
-  getCase(@Param("caseId") caseId: string): Promise<OnboardingCase> {
+  public async getCase(@Param("caseId") caseId: string): Promise<OnboardingCase> {
     return this.onboardingService.getCase(caseId);
   }
 
   @Post(":caseId/analyze")
-  async analyzeCase(@Param("caseId") caseId: string): Promise<EvidenceAnalysis & { source: string }> {
+  public async analyzeCase(@Param("caseId") caseId: string): Promise<EvidenceAnalysis & { source: string }> {
     const analysis = await this.analysisService.analyzeCase(caseId);
     return { ...analysis, source: llmConfigured() ? `AI model ${process.env.OPENAI_MODEL}` : "Simulated, no AI model" };
   }
 
   @Get(":caseId/follow-ups")
-  getFollowUps(@Param("caseId") caseId: string): Promise<FollowUpTask[]> {
+  public async getFollowUps(@Param("caseId") caseId: string): Promise<FollowUpTask[]> {
     return this.followUpService.listForCase(caseId);
   }
 
   @Post(":caseId/follow-ups")
-  createFollowUp(
+  public async createFollowUp(
     @Param("caseId") caseId: string,
-    @Body() body: CreateFollowUpBody,
+    @Body() body: CreateFollowUpDto,
   ): Promise<FollowUpTask> {
     return this.followUpService.createTechnicalReview(
       caseId,

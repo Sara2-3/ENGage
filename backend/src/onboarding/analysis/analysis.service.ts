@@ -13,7 +13,8 @@ import {
   EvidenceAnalysis,
   EvidenceAnalysisSchema,
 } from "./analysis.schema";
-import { OnboardingCase, OnboardingService } from "./onboarding.service";
+import type { OnboardingCase } from "../Entity/onboarding-case";
+import { OnboardingService } from "../onboarding.service";
 
 @Injectable()
 export class AnalysisService {

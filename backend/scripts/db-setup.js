@@ -61,7 +61,7 @@ async function main() {
   for (const file of ["schema.sql", "seed.sql"]) {
     await sql(url.href, (client) => client.query(readFileSync(join(root, "db", file), "utf8")));
   }
-  const repository = require("../dist/engage/db/repository");
+  const repository = require("../dist/database/repository");
   await repository.initStorage();
   try {
     await copySaved(url.href, repository);

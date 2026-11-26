@@ -4,7 +4,7 @@ import {
   ServiceUnavailableException,
 } from "@nestjs/common";
 
-import { DatabaseService } from "./database.service";
+import { DatabaseService } from "../database/database.service";
 
 interface HealthResponse {
   status: "ok" | "unavailable";

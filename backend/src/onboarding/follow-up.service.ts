@@ -7,8 +7,9 @@ import {
   ServiceUnavailableException,
 } from "@nestjs/common";
 
-import { DatabaseService } from "./database.service";
-import { keepFollowUp, savedFollowUp } from "./engage/db/repository";
+import { DatabaseService } from "../database/database.service";
+import { keepFollowUp, savedFollowUp } from "../database/repository";
+import type { FollowUpTask } from "./Entity/follow-up-task";
 import { OnboardingService } from "./onboarding.service";
 
 const TECHNICAL_REVIEW = "Technical Review";
@@ -24,16 +25,6 @@ interface FollowUpRow {
   assignee_role: string;
   status: string;
   created_at: Date | string;
-}
-
-export interface FollowUpTask {
-  taskId: string;
-  caseId: string;
-  taskType: string;
-  description: string;
-  assigneeRole: string;
-  status: string;
-  createdAt: string;
 }
 
 @Injectable()

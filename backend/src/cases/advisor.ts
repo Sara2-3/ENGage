@@ -1,8 +1,8 @@
 // Action Advisor (SPEC.md 5.3). No LLM provider is connected yet, so this returns
 // the template fallback and says so. An LLM call replaces `templateAdvice` later.
-import type { getCase } from '../cases/store';
+import type { CasesService } from './cases.service';
 
-type CaseDetail = NonNullable<Awaited<ReturnType<typeof getCase>>>;
+type CaseDetail = NonNullable<Awaited<ReturnType<CasesService['detail']>>>;
 
 export function templateAdvice({ case: c, assessment }: CaseDetail) {
   const first = assessment.actions[0];

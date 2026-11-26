@@ -5,7 +5,7 @@ import { z } from "zod/v4";
 
 import { EvidenceAnalysisModel } from "./analysis.model";
 import { EvidenceAnalysisSchema } from "./analysis.schema";
-import { OnboardingCase } from "./onboarding.service";
+import { OnboardingCase } from "../Entity/onboarding-case";
 
 export const llmConfigured = (env = process.env) => Boolean(env.OPENAI_API_KEY && env.OPENAI_MODEL);
 

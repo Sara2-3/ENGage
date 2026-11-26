@@ -1,7 +1,7 @@
 # Login
 
-Own folders, to avoid merge conflicts: `frontend/src/auth/` and `backend/src/auth/`.
-Only two existing files are wired to them: `frontend/src/main.tsx` and `backend/src/app.module.ts`.
+The login lives in `frontend/src/Pages/Login/` (the form), `frontend/src/Context/Auth.jsx` (who is
+signed in), `frontend/src/Services/AuthService.js` and `ProtectedRoute.jsx`, and in `backend/src/auth/`.
 
 ## Usernames
 
