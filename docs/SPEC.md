@@ -10,7 +10,7 @@ ENGage supports employee onboarding, project reallocation, and knowledge transfe
 
 The governing principle is **the LLM proposes, deterministic rules decide, and a human approves**. An LLM must never set or change `CAN_CLOSE`, `CANNOT_CLOSE`, `NEEDS_INFORMATION`, the assessment colour, the tracker status, or technical readiness. It must never send a message or create a workflow record without a human action.
 
-The implemented prototype includes role dashboards, append-only workflow events, a deterministic readiness assessment, fictional evidence, a template action advisor, a separate citation-checked analysis for Eva Stone, and human approval records. The Claude Action Advisor and general Evidence Extractor described below are planned work and are labelled accordingly.
+The implemented prototype includes role dashboards behind a demo sign-in, append-only workflow events, a deterministic readiness assessment, fictional evidence, a Claude Action Advisor with a template fallback, an Evidence Extractor that proposes records from pasted messages, a separate citation-checked analysis for Eva Stone, and human approval records. The Claude features need an API key and have not been run against the live API in this repository.
 
 ## 2. Roles and who decides
 
@@ -69,31 +69,31 @@ Eva Stone (`ONB-005`, Project Orion) has tracker status **Ready with Support**. 
 
 The word “agent” describes a bounded component with a defined responsibility. It does not mean that every component uses an LLM.
 
-### 4.1 Evidence Extractor — LLM, planned
+### 4.1 Evidence Extractor — LLM (Claude), implemented
 
-- **Status:** Not implemented. The current application has no general `POST /cases/:id/evidence/extract` route.
-- **Responsibility:** Convert raw email or message text into proposed structured claims.
-- **Input:** Case-scoped source ID, author role, and raw source text. The text is untrusted data, not instructions.
-- **Output:** Proposed claims shaped as `{ sourceId, quote, claim, confidence }`, with `quote` copied exactly from the source.
-- **Rules:** Propose only; do not write facts, events, statuses, decisions, or tasks. Ignore instructions found inside source text. Do not infer a claim without an exact quote.
-- **Interactions:** Sends proposals to the Evidence Validator. Only validated proposals may be shown to a human.
-- **Human check:** A permitted role must accept or reject each proposal before the existing event flow records anything.
-- **Limitations:** Text may be ambiguous, incomplete, or outside the model's context. Without an API key, the planned endpoint must return an empty proposal list with a clear unavailable message, not fabricated “AI” output.
+- **Status:** Implemented in `backend/src/cases/evidence-extractor.ts`, route `POST /cases/:id/extract`, shown to the Additional Manager and Technical Lead as *Paste an email*. Tested with an injected client, not with the live API.
+- **Responsibility:** Convert a pasted email or message into proposed workflow records.
+- **Input:** The pasted text (1 to 5000 characters), its author role and the allowed record types. The text is untrusted data, not instructions.
+- **Output:** `{ source, proposals: [{ type, payload, quote, confidence }], rejected: [{ type, payload, quote, reason }], message }`. Types are `ACCESS`, `ACTIVITY`, `BLOCKER` and `REQUEST_ANSWERED`.
+- **Rules:** Propose only; nothing is written. Instructions inside the text are ignored. Every proposal needs a verbatim quote.
+- **Interactions:** Every proposal goes through the Evidence Validator before it is shown.
+- **Human check:** A person accepts or rejects each proposal; an accepted one is recorded through the normal event flow and its role rules.
+- **Limitations:** Text may be ambiguous or incomplete. Without an API key, or on any error, the proposal list is empty with a clear message.
 
-### 4.2 Evidence Validator — code, no LLM, partially implemented
+### 4.2 Evidence Validator — code, no LLM, implemented
 
-- **Status:** Citation validation is implemented for the existing `POST /onboarding/cases/:caseId/analyze` flow. A reusable validator for the planned extraction endpoint is not yet implemented.
-- **Responsibility:** Ensure that structured model output is safe, correctly shaped, and traceable to evidence belonging to the current case.
-- **Input:** Proposed structured output and the current case's source records.
-- **Output:** Validated proposals or a rejection with a safe error.
-- **Rules:** Validate with Zod; reject an unknown source ID; reject a quote that is not a verbatim substring of the cited source; reject empty required fields; reject credential-like content. Never “repair” an invalid citation by inventing a source or quote.
-- **Interactions:** Sits after any LLM and before UI display or human acceptance. The existing analysis validator checks schema, source IDs, exact quotes, evidence-gap source IDs, and suggested-action source IDs.
-- **Human check:** Passing validation means the quote exists, not that the interpretation is correct. A person must review the claim in context.
-- **Limitations:** Exact-substring validation cannot detect misleading selection, omitted context, or semantically incorrect interpretation.
+- **Status:** `backend/src/cases/evidence-validator.ts` checks extractor proposals; `backend/src/onboarding/analysis/analysis.service.ts` checks the Eva Stone analysis.
+- **Responsibility:** Ensure that structured model output is correctly shaped, allowed and traceable to its source.
+- **Input:** Proposed output, the source text or the case's source records, the acting role and the case facts.
+- **Output:** Valid proposals, and rejected ones with a reason.
+- **Rules:** Strict Zod schema; the quote must be in the source (extra whitespace ignored for pasted text); credential-like content is rejected; the proposed event must pass the same role rules as a manual record. The analysis path also rejects unknown source IDs. Nothing is "repaired".
+- **Interactions:** Sits after the model and before display or human acceptance.
+- **Human check:** Passing validation means the quote exists, not that the interpretation is correct.
+- **Limitations:** Cannot detect misleading selection, omitted context or a wrong interpretation.
 
 ### 4.3 Gap & Conflict Checker and Readiness Assessor — code, implemented
 
-- **Status:** Implemented in `backend/src/engage/rules/engine.ts` and covered by the existing case tests.
+- **Status:** Implemented in `backend/src/rules/engine.ts` and covered by the existing case tests.
 - **Responsibility:** Detect operational problems, build the checklist, compute the deterministic decision and colour, and assign rule-based next actions.
 - **Input:** One case, its structured facts, its evidence, and the reference date.
 - **Output:** Flags, checklist, decision, colour, and next actions with owners.
@@ -102,16 +102,16 @@ The word “agent” describes a bounded component with a defined responsibility
 - **Human check:** People supply and verify the underlying facts. The Technical Lead currently records observed technical validation; PMO and Management review the resulting assessment.
 - **Limitations:** Rules depend on complete, correctly structured facts. They cannot understand arbitrary new prose until that prose has been reviewed and converted into facts.
 
-### 4.4 Action Planner / Advisor — template implemented, LLM planned
+### 4.4 Action Planner / Advisor — Claude with template fallback, implemented
 
-- **Status:** `templateAdvice` is implemented in `backend/src/engage/ai/advisor.ts`. `POST /cases/:id/advice` currently always returns this template. Claude generation, the `whatWouldChangeTheDecision` field, timeout handling, and LLM-output validation are not yet implemented.
-- **Responsibility:** Draft a follow-up message, identify the action owner, explain what evidence would change the decision, and cite relevant evidence IDs.
-- **Input:** Only deterministic flags, checklist items, actions, and case evidence IDs and texts. The planned LLM must receive no other employee or case data.
-- **Output:** Planned contract: `{ draft: { to, subject, body }, whatWouldChangeTheDecision, citedEvidenceIds }`, plus a visible source label. The current template returns `draft`, `citedEvidenceIds`, and `source: "Template, not AI generated"`.
-- **Rules:** Never modify a case, decision, colour, tracker status, task, or readiness. Every cited ID must belong to the current case. Missing configuration, timeout, invalid JSON, invalid citations, or any provider error must use the template fallback.
-- **Interactions:** Uses the Readiness Assessor output. The UI lets a person edit the draft, and `POST /cases/:id/reviews` records approval or rejection. Sending is simulated.
-- **Human check:** The draft must be reviewed and explicitly approved or rejected. An AI result must be labelled `AI generated (Claude), pending human review`; fallback must be labelled `Template, not AI generated`.
-- **Limitations:** The current template cannot interpret nuance or produce “What would change the decision?”. The planned LLM can improve wording and synthesis, but cannot decide whether onboarding closes.
+- **Status:** Implemented in `backend/src/cases/advisor.ts`; routes `POST /cases/:id/advice` and `POST /cases/:id/brief` (the *Evidence brief* for PMO, Additional Manager and Technical Lead). Tested with an injected client, not with the live API.
+- **Responsibility:** Draft a follow-up message, explain a conflict and say what evidence would change the decision.
+- **Input:** Only deterministic flags, checklist items, actions, and the case's evidence IDs and texts.
+- **Output:** `{ draft: { to, subject, body }, whatWouldChangeTheDecision, conflictExplanation, citedEvidenceIds, source }`.
+- **Rules:** Never modify a case, decision, colour, status, task or readiness. Every cited ID must belong to the case. Missing key, timeout (8 s), invalid JSON, schema failure, bad citation or provider error use the template.
+- **Interactions:** Uses the Readiness Assessor output. A person edits the draft; `POST /cases/:id/reviews` records approval or rejection. Sending is simulated.
+- **Human check:** The draft is approved or rejected by a person. It is labelled `AI generated (Claude), pending human review` or `Template, not AI generated`.
+- **Limitations:** The cited IDs are checked, but the wording of the explanation and draft is not checked against the evidence. The model cannot decide whether onboarding closes.
 
 ## 5. Purposeful and responsible LLM use
 
@@ -125,7 +125,7 @@ Dates, missing fields, access state, role permissions, blocker ownership, checkl
 
 ### 5.3 Minimum data and untrusted input
 
-The planned Extractor receives only the source metadata and text needed for extraction. The planned Advisor receives only flags, checklist, actions, and evidence IDs and texts. Source text is treated as untrusted and any instructions inside it are ignored. Credentials must never be sent, logged, committed, or stored.
+The Extractor receives only the pasted text, its author role and the allowed record types. The Advisor receives only flags, checklist, actions, and evidence IDs and texts. Source text is treated as untrusted and any instructions inside it are ignored. Credentials must never be sent, logged, committed, or stored.
 
 ### 5.4 Validation and fallback
 
@@ -133,7 +133,7 @@ Model output is untrusted. It must pass a strict Zod schema, known-source checks
 
 ### 5.5 Current model integrations
 
-The requested Claude advisor is not implemented yet. A separate existing Eva-only evidence-analysis path can use deterministic simulated output by default or an OpenAI Responses API call when its backend variables are configured. That path is advisory, citation-checked, and has not been verified with a live key.
+The Action Advisor and Evidence Extractor call the Anthropic API when `ANTHROPIC_API_KEY` is set (`ANTHROPIC_MODEL` defaults to `claude-sonnet-5-5`). A separate Eva-only evidence analysis is simulated by default and calls the OpenAI Responses API when `OPENAI_API_KEY` and `OPENAI_MODEL` are set. All are advisory and none has been verified with a live key.
 
 ## 6. Deterministic rules
 
@@ -208,12 +208,12 @@ Event types have explicit allowed roles. Only the Employee may set access to `US
 ## 8. Limitations and what is simulated
 
 - All employees, cases, emails, CVs, and activity records are fictional hackathon data.
-- There is no login. The role comes from the client, and the server trusts that role for most demo operations; role checks are workflow constraints, not production security.
-- The default data source is JSON seed data plus local file state. It is not designed for concurrent production use.
-- PostgreSQL support exists but the latest full workflow has not been verified end to end in that mode.
+- The sign-in is a demo entry door: it decides which dashboard is shown, but the API does not check it and trusts the role sent by the client. Role checks are workflow constraints, not production security.
+- Without `DATABASE_URL` the data is JSON seed data plus a local state file. It is not designed for concurrent production use.
+- PostgreSQL has been run locally with the main workflow; it is not tested under concurrent use.
 - Staffing, notifications, message delivery, and external integrations are mocked or simulated.
-- The current Action Advisor is a template, not AI-generated.
-- The planned Claude advisor and general Evidence Extractor endpoint do not exist yet.
+- Without an Anthropic key the Action Advisor uses its template and the Evidence Extractor proposes nothing.
+- The Claude paths have been tested only with injected clients, not against the live API.
 - The Eva-only evidence analysis is simulated by default; its optional live model path has not been verified.
 - Exact-quote validation proves that words occur in a source, not that a claim is a fair interpretation.
 - No credentials are stored. Real employee data and sensitive documents must not be used.
@@ -257,10 +257,12 @@ npm.cmd run build --prefix backend
 npm.cmd run test:engage --prefix backend
 npm.cmd run test:analysis --prefix backend
 npm.cmd run test:follow-ups --prefix backend
+npm.cmd run test:advisor --prefix backend
+npm.cmd run test:extractor --prefix backend
 npm.cmd run build --prefix frontend
 ```
 
-Task 1 changes documentation only, so no dependency or environment change is required. The future Claude work will use an uncommitted backend `.env` with an empty placeholder documented in `.env.example`; no real key may be committed.
+A real key goes only into `backend/.env`, which Git ignores. The sign-in and PostgreSQL steps are in the [README](../README.md).
 
 ## 10. Assumptions and open questions
 
@@ -272,6 +274,6 @@ Task 1 changes documentation only, so no dependency or environment change is req
 - **A-6 — Stale threshold:** More than 7 days without a tracker update is an amber issue.
 - **A-7 — Additional Manager hierarchy:** Organisers verbally clarified that the Additional Manager is a peer of the Technical Lead and both report to the Line Manager. The current UI/reporting implementation is not fully consistent with that clarification: it routes Technical Lead reports to the Line Manager, Line Manager reports to the Additional Manager, and Additional Manager reports to Management. This must be confirmed before production rules are finalised.
 - **A-8 — Final-readiness owner is unresolved:** The organisers have not settled whether PMO or the Technical Lead owns the final business decision. The current workflow is unchanged: only the Technical Lead records technical validation, the deterministic engine computes the case decision, and PMO reviews evidence and follow-up. This is an implementation assumption, not a final governance decision.
-- **A-9 — Safe degradation:** If a model is absent or fails, deterministic rules and original evidence remain available. The advisor uses its template; the planned extractor returns no proposals.
+- **A-9 — Safe degradation:** If a model is absent or fails, deterministic rules and original evidence remain available. The advisor uses its template; the extractor returns no proposals.
 
 Any change to A-7 or A-8 must be reflected in role permissions, reporting flow, tests, UI language, and this specification together.
